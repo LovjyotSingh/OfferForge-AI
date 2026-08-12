@@ -24,6 +24,8 @@ export function saveAuth(token, user) {
   sessionStorage.setItem(USER_KEY, JSON.stringify(user || {}));
 }
 
+export const setAuth = saveAuth;
+
 export function clearAuth() {
   clearLegacyAuth();
   sessionStorage.removeItem(TOKEN_KEY);
