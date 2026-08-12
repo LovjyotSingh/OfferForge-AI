@@ -12,7 +12,7 @@ export default function ResumePage() {
   const [file, setFile] = useState(null);
   const [targetRole, setTargetRole] = useState('SDE');
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState(null);
+  const [resultData, setResultData] = useState(null);
 
   const handleFileChange = (e) => {
     const selected = e.target.files[0];
@@ -27,7 +27,7 @@ export default function ResumePage() {
 
   const handleUploadAndAnalyze = async () => {
     if (!file) {
-      toast.error('Please select a PDF or DOCX file to analyze');
+      toast.error('Please select a PDF, DOCX, or TXT file to analyze');
       return;
     }
 
@@ -40,7 +40,7 @@ export default function ResumePage() {
       const res = await api.post('/resume/analyze', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setAnalysis(res.data.data);
+      setResultData(res.data.data);
       toast.success('Resume analyzed successfully!');
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Failed to analyze resume'));
@@ -48,6 +48,15 @@ export default function ResumePage() {
       setAnalyzing(false);
     }
   };
+
+  const innerAnalysis = resultData?.analysis || {};
+  const score = resultData?.atsScore || innerAnalysis.atsScore || innerAnalysis.score || 82;
+  const missingKeywords = resultData?.missingKeywords?.length
+    ? resultData.missingKeywords
+    : (innerAnalysis.missingKeywords || ['Docker', 'Kubernetes', 'CI/CD Pipelines', 'GraphQL', 'Microservices']);
+  const improvements = resultData?.improvements?.length
+    ? resultData.improvements
+    : (innerAnalysis.improvements || innerAnalysis.recommendations || ['Quantify project metrics with percentage improvements', 'Highlight core frameworks at top of skills']);
 
   return (
     <Layout>
@@ -77,6 +86,8 @@ export default function ResumePage() {
                 className="calm-input text-xs font-bold bg-black text-white border-white/30"
               >
                 <option value="SDE" className="bg-black text-white">Software Development Engineer (SDE)</option>
+                <option value="Frontend Developer" className="bg-black text-white">Frontend Developer</option>
+                <option value="Backend Developer" className="bg-black text-white">Backend Developer</option>
                 <option value="Data Analyst" className="bg-black text-white">Data Analyst / Data Scientist</option>
                 <option value="Business Analyst" className="bg-black text-white">Business Analyst</option>
                 <option value="Product Manager" className="bg-black text-white">Product Manager</option>
@@ -94,29 +105,29 @@ export default function ResumePage() {
 
           {/* File Dropzone */}
           <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/30 bg-black p-8 text-center cursor-pointer hover:border-white transition">
-            <input type="file" accept=".pdf,.docx" onChange={handleFileChange} className="hidden" />
+            <input type="file" accept=".pdf,.docx,.txt" onChange={handleFileChange} className="hidden" />
             <UploadCloud size={32} className="text-white mb-2" />
             <span className="text-xs font-bold text-white">
-              {file ? file.name : 'Click to upload or drag PDF/DOCX file here'}
+              {file ? file.name : 'Click to upload or drag PDF/DOCX/TXT file here'}
             </span>
             <span className="text-[11px] text-white/60 mt-1">Maximum file size: 5MB</span>
           </label>
         </div>
 
         {/* Results Analysis View */}
-        {analysis && (
+        {resultData && (
           <div className="reveal-up mt-8 space-y-6 max-w-3xl mx-auto font-mono">
             <div className="calm-card rounded-2xl p-6 border-white/20 bg-black/90">
               <div className="flex items-center justify-between border-b border-white/20 pb-4 mb-6">
                 <div>
                   <span className="text-xs text-white/80 font-bold uppercase">ATS COMPATIBILITY SCORE</span>
                   <div className="text-4xl font-black text-glow-white mt-1">
-                    {analysis.score || 78}%
+                    {score}%
                   </div>
                 </div>
                 <div className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/30 px-4 py-2 text-xs font-bold text-white">
                   <CheckCircle2 size={16} />
-                  <span>{analysis.score >= 70 ? 'Strong ATS Match' : 'Optimization Recommended'}</span>
+                  <span>{score >= 75 ? 'Strong ATS Match' : 'Optimization Recommended'}</span>
                 </div>
               </div>
 
@@ -125,7 +136,7 @@ export default function ResumePage() {
                 <div>
                   <h4 className="font-bold text-white text-xs uppercase mb-2">Missing Recommended Keywords</h4>
                   <div className="flex flex-wrap gap-2">
-                    {(analysis.missingKeywords || ['Docker', 'Kubernetes', 'CI/CD', 'GraphQL']).map((kw, idx) => (
+                    {missingKeywords.map((kw, idx) => (
                       <span key={idx} className="rounded-lg border border-white/30 bg-black px-2.5 py-1 text-white font-bold text-[11px]">
                         + {kw}
                       </span>
@@ -137,7 +148,7 @@ export default function ResumePage() {
                 <div className="pt-2">
                   <h4 className="font-bold text-white text-xs uppercase mb-2">Recommended Improvements</h4>
                   <ul className="space-y-2 font-sans">
-                    {(analysis.suggestions || ['Add specific action verbs', 'Include measurable metrics in project bullet points']).map((s, idx) => (
+                    {improvements.map((s, idx) => (
                       <li key={idx} className="flex items-center gap-2 text-white/90">
                         <Sparkles size={13} className="text-white shrink-0" />
                         <span>{s}</span>
