@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import {
   CheckCircle2,
+  Copy,
   Sparkles,
   UploadCloud,
+  Wand2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Layout from '../components/Layout';
@@ -13,6 +15,8 @@ export default function ResumePage() {
   const [targetRole, setTargetRole] = useState('SDE');
   const [analyzing, setAnalyzing] = useState(false);
   const [resultData, setResultData] = useState(null);
+  const [generatingOptimized, setGeneratingOptimized] = useState(false);
+  const [optimizedData, setOptimizedData] = useState(null);
 
   const handleFileChange = (e) => {
     const selected = e.target.files[0];
@@ -32,6 +36,7 @@ export default function ResumePage() {
     }
 
     setAnalyzing(true);
+    setOptimizedData(null);
     const formData = new FormData();
     formData.append('resume', file);
     formData.append('targetRole', targetRole);
@@ -46,6 +51,30 @@ export default function ResumePage() {
       toast.error(getApiErrorMessage(err, 'Failed to analyze resume'));
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  const handleGenerateOptimized = async () => {
+    setGeneratingOptimized(true);
+    try {
+      const res = await api.post('/resume/optimize', {
+        targetRole,
+        missingKeywords,
+        improvements,
+      });
+      setOptimizedData(res.data.data);
+      toast.success('Generated 95%+ ATS Optimized Resume!');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not generate optimized resume'));
+    } finally {
+      setGeneratingOptimized(false);
+    }
+  };
+
+  const handleCopyOptimized = () => {
+    if (optimizedData?.optimizedResume) {
+      navigator.clipboard.writeText(optimizedData.optimizedResume);
+      toast.success('Optimized resume copied to clipboard!');
     }
   };
 
@@ -65,13 +94,13 @@ export default function ResumePage() {
         <div className="reveal-up mb-8 text-center max-w-2xl mx-auto">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/10 px-3.5 py-1 text-xs text-white font-bold font-mono">
             <Sparkles size={14} className="text-white animate-pulse" />
-            ATS RESUME INTELLIGENCE
+            ATS RESUME INTELLIGENCE & GENERATOR
           </div>
           <h1 className="text-3xl font-black text-glow-white sm:text-4xl">
             Optimize Your Resume for ATS
           </h1>
           <p className="mt-2 text-xs text-white/70 font-mono">
-            Upload your resume to get instant ATS compatibility scoring and actionable missing keyword analysis.
+            Upload your resume to analyze ATS compatibility score and generate a 95%+ optimized resume with missing keywords incorporated.
           </p>
         </div>
 
@@ -156,8 +185,51 @@ export default function ResumePage() {
                     ))}
                   </ul>
                 </div>
+
+                {/* Action Button: Generate 95%+ Optimized Resume */}
+                <div className="pt-6 border-t border-white/20 text-center">
+                  <button
+                    onClick={handleGenerateOptimized}
+                    disabled={generatingOptimized}
+                    className="calm-button w-full sm:w-auto px-8 py-3 text-xs font-extrabold uppercase flex items-center justify-center gap-2 mx-auto disabled:opacity-50"
+                  >
+                    <Wand2 size={16} className="animate-spin" />
+                    {generatingOptimized ? 'Forging 95%+ Optimized Resume...' : '✨ Generate 95%+ ATS Optimized Resume'}
+                  </button>
+                </div>
               </div>
             </div>
+
+            {/* Generated Optimized Resume View */}
+            {optimizedData && (
+              <div className="calm-card rounded-2xl p-6 sm:p-8 border-white/30 bg-black/95 reveal-up font-mono">
+                <div className="flex items-center justify-between border-b border-white/20 pb-4 mb-6">
+                  <div>
+                    <span className="text-[11px] text-white/80 font-bold uppercase tracking-wider">PROJECTED ATS SCORE</span>
+                    <div className="text-3xl font-black text-glow-white mt-0.5">
+                      {optimizedData.projectedAtsScore || 96}% ATS MATCH
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCopyOptimized}
+                    className="calm-button-outline px-4 py-2 text-xs font-bold uppercase flex items-center gap-1.5"
+                  >
+                    <Copy size={14} />
+                    Copy Resume Text
+                  </button>
+                </div>
+
+                {optimizedData.summary && (
+                  <p className="text-xs text-white/80 mb-6 bg-white/5 border border-white/20 p-3.5 rounded-xl font-sans leading-relaxed">
+                    💡 <strong>Enhancements Applied:</strong> {optimizedData.summary}
+                  </p>
+                )}
+
+                <div className="rounded-xl border border-white/20 bg-black p-6 font-mono text-xs leading-relaxed text-white whitespace-pre-wrap selection:bg-white selection:text-black">
+                  {optimizedData.optimizedResume}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

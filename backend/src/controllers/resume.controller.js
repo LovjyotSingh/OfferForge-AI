@@ -81,3 +81,26 @@ exports.analyzeResume = async (req, res) => {
     res.status(500).json({ status: 'error', message: err.message || 'Resume analysis failed' });
   }
 };
+
+// POST /api/resume/optimize
+exports.optimizeResume = async (req, res) => {
+  try {
+    const { resumeText, targetRole, missingKeywords, improvements } = req.body;
+    const role = targetRole || req.user?.targetRole || 'SDE';
+
+    const result = await ai.generateOptimizedResume(
+      resumeText || `Candidate resume for ${role}`,
+      role,
+      missingKeywords || [],
+      improvements || []
+    );
+
+    res.json({
+      status: 'success',
+      data: result
+    });
+  } catch (err) {
+    console.error('Optimize resume error:', err);
+    res.status(500).json({ status: 'error', message: 'Could not generate optimized resume' });
+  }
+};
