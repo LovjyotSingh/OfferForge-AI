@@ -663,6 +663,45 @@ Computer Science graduate from USICT (GGSIPU) with hands-on experience building 
   };
 }
 
+function generateDynamicFallbackReply(message, context = {}) {
+  const q = String(message || '').toLowerCase().trim();
+  const route = context.currentRoute || '/';
+  const name = context.userName || 'Candidate';
+  const role = context.targetRole || 'SDE';
+
+  if (q.includes('see') || q.includes('screen') || q.includes('explain') || q.includes('page') || q.includes('look')) {
+    if (route.includes('/resume')) {
+      return `On your screen right now, ${name}, you are viewing the **ATS Resume Intelligence Studio**. This page lets you upload your resume to extract key tech stack terms, calculate an ATS compatibility score for **${role}**, and generate a 95%+ optimized resume with metric bullet points. What specific section would you like to tweak?`;
+    } else if (route.includes('/interview')) {
+      return `You are currently looking at an active **AI Mock Interview Session**! Your screen shows the real-time AI Interviewer waveform, timer badge, question category, and response box. Once you type your technical response and click **Submit Response**, the system evaluates your score across Technical, Clarity, and Confidence metrics!`;
+    } else if (route.includes('/dashboard')) {
+      return `You are currently on your **OfferForge AI Candidate Dashboard**! Your screen displays target role configuration selectors (**${role}**), difficulty options, historical performance charts, total interview rounds, and average scores. You can launch a new interview or jump to the ATS Scanner anytime!`;
+    }
+  }
+
+  if (q.includes('100%') || q.includes('score') || q.includes('perfect') || q.includes('pass') || q.includes('grade')) {
+    return `To achieve a **100% (Principal Level)** score on OfferForge AI, structure your answers with these 4 pillars:\n\n1. **Core Concept & Definitions**: Define OS/System primitives (e.g. Virtual Address Space, TLB flushing, CR3 registers, locks).\n2. **Hardware & Trade-Offs**: Detail CPU cache, latency (ns vs µs), and memory bounds.\n3. **Real-World Architecture**: Reference real systems (e.g. Nginx, Redis, Chrome, Node.js).\n4. **Metrics & Impact**: Include exact throughput/latency metrics (+35% speedup, sub-50ms latency).`;
+  }
+
+  if (q.includes('rate limit') || q.includes('redis') || q.includes('system design') || q.includes('architecture')) {
+    return `For High-Traffic Rate Limiter System Design (100k RPM / ~1.6k RPS):\n\n- **Algorithm**: Use **Sliding Window Counter** to eliminate boundary bursts with $O(1)$ memory.\n- **Storage**: **Redis Cluster** running an **Atomic Lua Script** (\`ZREMRANGEBYSCORE\` + \`ZCARD\` + \`ZADD\`) to prevent race conditions without locks.\n- **Resilience**: Implement L1 local LRU caching for blocked keys and a **Fail-Open Circuit Breaker** if Redis times out.\n- **Headers**: Return \`X-RateLimit-Limit\`, \`X-RateLimit-Remaining\`, and \`Retry-After\`.`;
+  }
+
+  if (q.includes('resume') || q.includes('ats') || q.includes('keyword') || q.includes('optimi')) {
+    return `To optimize your resume for **${role}**:\n\n1. Use standard headings (\`# Professional Summary\`, \`# Technical Skills\`, \`# Projects\`).\n2. Incorporate missing keywords seamlessly into project bullet points.\n3. Add metric-driven impact (+35% deployment speed, 45% database query speedup).\n4. Click **"✨ Generate 95%+ ATS Optimized Resume"** on the ATS Scanner page to auto-generate a tailored resume!`;
+  }
+
+  if (q.includes('interview') || q.includes('question') || q.includes('practice') || q.includes('prep')) {
+    return `Great question! When practicing mock interviews for **${role}**:\n\n- Take 10–20 seconds to mentally outline your response before typing.\n- Use STAR method (Situation, Task, Action, Result) for behavioral questions.\n- For technical questions, state time/space complexity ($O(1)$, $O(N)$) upfront.\n- Feel free to ask me for hints or sample answers anytime during your session!`;
+  }
+
+  if (q.includes('hi') || q.includes('hello') || q.includes('hey') || q.includes('who are you')) {
+    return `Hello ${name}! I am your **OfferForge AI Co-Pilot**. I'm actively watching your session on **${route}**. I can help you answer technical questions, explain what's on your screen, optimize your resume for **${role}**, or practice system design. What would you like to focus on right now?`;
+  }
+
+  return `Regarding your question about **"${message}"** on **${route}**:\n\nAs your OfferForge AI Co-Pilot tailored for **${role}**, I recommend focusing on clean technical principles, metric-driven achievements, and production scalability. Let me know if you want a detailed breakdown, code snippet, or system diagram for this topic!`;
+}
+
 async function chatWithContext(message, context = {}) {
   const currentRoute = context.currentRoute || '/';
   const userName = context.userName || 'Candidate';
@@ -697,19 +736,10 @@ Instructions:
     const responseText = await callAI(prompt, { temperature: 0.7, maxTokens: 1500, maxOutputTokens: 1500 });
     if (responseText) return responseText;
   } catch (err) {
-    console.warn(`[AI Warning] Chat assistant call failed (${err.message}). Using intelligent contextual response.`);
+    console.warn(`[AI Warning] Chat assistant call failed (${err.message}). Using dynamic conversational response.`);
   }
 
-  // Context-aware smart fallback response
-  if (currentRoute.includes('/resume')) {
-    return `I see you're currently on the **ATS Resume Intelligence** page, ${userName}! You can upload your resume to analyze keyword gaps for **${targetRole}** or click **"✨ Generate 95%+ ATS Optimized Resume"** to automatically re-architect your resume with high-impact metric bullet points. Let me know if you need help tailoring any specific section!`;
-  } else if (currentRoute.includes('/interview')) {
-    return `You're currently in an active **AI Mock Interview** session! Take your time to structure your response using clear technical definitions, system architecture patterns, time/space complexity trade-offs, and metrics. If you need a hint or want to skip, use the control buttons at the top. You've got this!`;
-  } else if (currentRoute.includes('/dashboard')) {
-    return `Welcome to your **OfferForge AI Dashboard**, ${userName}! Here you can launch new mock interview rounds, select target role parameters (**${targetRole}**), track your average & highest score analytics, and jump straight to ATS resume scanning. What would you like to practice today?`;
-  } else {
-    return `Hello ${userName}! I am your **OfferForge AI Co-Pilot**. I'm actively watching your session on ${currentRoute}. I can help you prepare for technical interviews, analyze system design trade-offs, optimize your resume for ATS parsers, or guide you through any feature on OfferForge AI. How can I assist you right now?`;
-  }
+  return generateDynamicFallbackReply(message, context);
 }
 
 module.exports = { generateQuestions, evaluateResponse, generateOverallFeedback, analyzeResume, generateOptimizedResume, chatWithContext, getAIStatus };
