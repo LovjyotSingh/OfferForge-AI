@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -8,6 +8,7 @@ import {
   Clock3,
   FileCheck2,
   Send,
+  SkipForward,
   Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -20,8 +21,9 @@ export default function InterviewPage() {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
-  const [interview, setInterview] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(10);
   const [answer, setAnswer] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
@@ -29,7 +31,7 @@ export default function InterviewPage() {
   const [phase, setPhase] = useState('question');
 
   useEffect(() => {
-    fetchInterviewDetails();
+    fetchNextQuestion();
   }, [id]);
 
   useEffect(() => {
@@ -40,22 +42,22 @@ export default function InterviewPage() {
     return () => clearInterval(interval);
   }, [phase]);
 
-  const fetchInterviewDetails = async () => {
+  const fetchNextQuestion = async () => {
+    setLoading(true);
     try {
-      const res = await api.get(`/interviews/${id}`);
+      const res = await api.get(`/interviews/${id}/next-question`);
       const data = res.data.data;
-      setInterview(data);
 
-      if (data.status === 'completed') {
+      if (data.completed) {
         setPhase('complete');
       } else {
-        const nextUnanswered = data.questions.findIndex((q) => !q.userAnswer);
-        if (nextUnanswered !== -1) {
-          setCurrentIndex(nextUnanswered);
-        }
+        setCurrentQuestion(data.question);
+        setCurrentIndex(data.currentIndex);
+        setTotalQuestions(data.totalQuestions);
+        setPhase('question');
       }
     } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Could not load interview details'));
+      toast.error(getApiErrorMessage(err, 'Could not load next question'));
       navigate('/dashboard');
     } finally {
       setLoading(false);
@@ -71,20 +73,42 @@ export default function InterviewPage() {
     setSubmitting(true);
 
     try {
-      const questionObj = interview.questions[currentIndex];
-      const res = await api.post(`/interviews/${id}/answer`, {
-        questionId: questionObj._id,
+      const qStr = typeof currentQuestion === 'string' ? currentQuestion : (currentQuestion?.question || 'Technical Question');
+      const qCat = typeof currentQuestion === 'object' ? (currentQuestion?.category || 'technical') : 'technical';
+
+      const res = await api.post(`/interviews/${id}/submit-response`, {
+        question: qStr,
+        questionCategory: qCat,
         answer: answer.trim(),
+        timeSpent: timer,
       });
 
-      const updatedData = res.data.data;
-      setInterview(updatedData.interview || updatedData);
-
-      const evalData = updatedData.evaluation || res.data.data.evaluation;
+      const evalData = res.data.data.evaluation;
       setFeedback(evalData);
       setPhase('feedback');
     } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Could not evaluate answer'));
+      toast.error(getApiErrorMessage(err, 'Could not evaluate response'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSkipQuestion = async () => {
+    setSubmitting(true);
+    try {
+      const qStr = typeof currentQuestion === 'string' ? currentQuestion : (currentQuestion?.question || 'Technical Question');
+      const qCat = typeof currentQuestion === 'object' ? (currentQuestion?.category || 'technical') : 'technical';
+
+      await api.post(`/interviews/${id}/skip-question`, {
+        question: qStr,
+        questionCategory: qCat,
+        timeSpent: timer,
+      });
+      setAnswer('');
+      setTimer(0);
+      fetchNextQuestion();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not skip question'));
     } finally {
       setSubmitting(false);
     }
@@ -93,24 +117,8 @@ export default function InterviewPage() {
   const handleNextQuestion = () => {
     setAnswer('');
     setFeedback(null);
-
-    if (currentIndex + 1 < interview.questions.length) {
-      setCurrentIndex((prev) => prev + 1);
-      setPhase('question');
-    } else {
-      handleCompleteInterview();
-    }
-  };
-
-  const handleCompleteInterview = async () => {
-    try {
-      const res = await api.post(`/interviews/${id}/complete`);
-      setInterview(res.data.data);
-      setPhase('complete');
-      toast.success('Interview round completed!');
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Could not finalize interview'));
-    }
+    setTimer(0);
+    fetchNextQuestion();
   };
 
   const fmt = (s) => {
@@ -122,19 +130,21 @@ export default function InterviewPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex min-h-[70vh] items-center justify-center bg-black">
-          <div className="calm-card rounded-2xl p-8 text-center border-white/20 bg-black">
-            <BrainCircuit size={28} className="mx-auto text-white animate-spin mb-3" />
-            <div className="text-sm font-bold text-white font-mono uppercase">Preparing Interview Session...</div>
+        <div className="flex min-h-[75vh] items-center justify-center bg-black text-white font-mono">
+          <div className="calm-card rounded-2xl p-8 text-center border border-white/20 bg-black/90 max-w-sm">
+            <BrainCircuit size={28} className="mx-auto text-white animate-spin mb-4" />
+            <div className="text-xs font-bold text-white uppercase tracking-widest">Generating AI Question...</div>
+            <p className="mt-2 text-[11px] text-white/60">Crafting role-specific questions for your target position.</p>
           </div>
         </div>
       </Layout>
     );
   }
 
-  const question = interview?.questions?.[currentIndex];
-  const totalQuestions = interview?.questions?.length || 10;
   const completion = Math.round(((currentIndex + (phase === 'feedback' ? 1 : 0)) / totalQuestions) * 100);
+  const qText = typeof currentQuestion === 'string' ? currentQuestion : (currentQuestion?.question || 'Technical Question');
+  const qCategory = typeof currentQuestion === 'object' ? (currentQuestion?.category || 'Technical') : 'Technical';
+  const qContext = typeof currentQuestion === 'object' ? currentQuestion?.context : null;
 
   return (
     <Layout>
@@ -169,21 +179,24 @@ export default function InterviewPage() {
         <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
           {phase === 'question' && (
             <div className="space-y-6 reveal-up">
-              <AIWaveform active={submitting} label="AI VOICE ASSISTANT" />
+              <AIWaveform active={submitting} label="AI INTERVIEWER ACTIVE" />
 
               {/* Question Card */}
-              <div className="calm-card rounded-2xl p-6 sm:p-8 border-white/20 bg-black/90">
-                <div className="mb-3 flex items-center gap-2 font-mono">
+              <div className="calm-card rounded-2xl p-6 sm:p-8 border-white/20 bg-black/90 font-sans">
+                <div className="mb-3 flex items-center justify-between font-mono">
                   <span className="rounded-md border border-white/30 bg-white/10 px-2.5 py-0.5 text-[11px] font-bold uppercase text-white">
-                    {question?.category || 'Technical'}
+                    {qCategory}
+                  </span>
+                  <span className="text-[11px] text-white/60 font-bold">
+                    Question #{currentIndex + 1}
                   </span>
                 </div>
                 <h1 className="text-xl sm:text-2xl font-bold leading-snug text-glow-white">
-                  {question?.question}
+                  {qText}
                 </h1>
-                {question?.context && (
+                {qContext && (
                   <p className="mt-3 text-xs text-white/70 font-sans leading-relaxed">
-                    {question.context}
+                    {qContext}
                   </p>
                 )}
               </div>
@@ -191,17 +204,27 @@ export default function InterviewPage() {
               {/* Answer Box */}
               <div className="calm-card rounded-2xl p-6 border-white/20 bg-black/90">
                 <label className="block mb-2 text-xs font-bold uppercase text-white font-mono">
-                  Your Answer Response
+                  Your Response
                 </label>
                 <textarea
                   rows={6}
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Type your response here... (Structure your answer clearly with key impact metrics)"
+                  placeholder="Type your response here... (Structure your answer clearly with key technical details)"
                   className="calm-input text-sm leading-relaxed bg-black text-white border-white/30"
                 />
                 <div className="mt-4 flex items-center justify-between text-xs text-white/80 font-mono">
-                  <span>{answer.length} characters</span>
+                  <div className="flex items-center gap-3">
+                    <span>{answer.length} characters</span>
+                    <button
+                      onClick={handleSkipQuestion}
+                      disabled={submitting}
+                      className="text-white/60 hover:text-white flex items-center gap-1 text-[11px] transition"
+                    >
+                      <SkipForward size={13} />
+                      Skip Question
+                    </button>
+                  </div>
                   <button
                     onClick={handleSubmitAnswer}
                     disabled={submitting || !answer.trim()}
@@ -218,10 +241,10 @@ export default function InterviewPage() {
           {phase === 'feedback' && (
             <div className="space-y-6 reveal-up">
               {/* Feedback Summary Card */}
-              <div className="calm-card rounded-2xl p-6 sm:p-8 border-white/20 bg-black/90">
+              <div className="calm-card rounded-2xl p-6 sm:p-8 border-white/20 bg-black/90 font-sans">
                 <div className="flex items-center justify-between border-b border-white/20 pb-4 mb-6 font-mono">
                   <div>
-                    <span className="text-xs text-white/80 font-bold uppercase">EVALUATION SCORE</span>
+                    <span className="text-xs text-white/80 font-bold uppercase">AI EVALUATION SCORE</span>
                     <div className="text-4xl font-black text-glow-white mt-1">
                       {feedback?.score || feedback?.technicalScore || 80}%
                     </div>
@@ -253,7 +276,7 @@ export default function InterviewPage() {
                   </div>
 
                   <div>
-                    <h4 className="font-bold text-white text-xs uppercase mb-1.5 font-mono">Key Improvements</h4>
+                    <h4 className="font-bold text-white text-xs uppercase mb-1.5 font-mono font-bold">Key Improvements</h4>
                     <ul className="space-y-1 text-xs">
                       {(feedback?.improvements || ['Add specific performance metrics']).map((imp, idx) => (
                         <li key={idx} className="flex items-center gap-2 text-white/90">
@@ -282,13 +305,13 @@ export default function InterviewPage() {
           )}
 
           {phase === 'complete' && (
-            <div className="text-center py-12 calm-card rounded-2xl p-8 border-white/20 bg-black/90 reveal-up">
+            <div className="text-center py-12 calm-card rounded-2xl p-8 border-white/20 bg-black/90 reveal-up font-sans">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-black font-bold">
                 <FileCheck2 size={28} />
               </div>
-              <h2 className="text-2xl font-black text-white mb-2 text-glow-white">Round Completed!</h2>
+              <h2 className="text-2xl font-black text-white mb-2 text-glow-white">Interview Round Completed!</h2>
               <p className="text-sm text-white/80 max-w-md mx-auto mb-6 font-sans">
-                Your performance analytics have been updated on your dashboard.
+                Your performance analytics have been saved to your dashboard.
               </p>
               <button onClick={() => navigate('/dashboard')} className="calm-button px-8 py-3 text-xs font-extrabold uppercase">
                 Back to Dashboard
