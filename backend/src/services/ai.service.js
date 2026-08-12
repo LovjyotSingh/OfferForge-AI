@@ -663,4 +663,53 @@ Computer Science graduate from USICT (GGSIPU) with hands-on experience building 
   };
 }
 
-module.exports = { generateQuestions, evaluateResponse, generateOverallFeedback, analyzeResume, generateOptimizedResume, getAIStatus };
+async function chatWithContext(message, context = {}) {
+  const currentRoute = context.currentRoute || '/';
+  const userName = context.userName || 'Candidate';
+  const targetRole = context.targetRole || 'SDE';
+  const pageTitle = context.pageTitle || 'OfferForge AI';
+  const screenSummary = context.screenSummary || 'Viewing OfferForge AI platform';
+  const history = Array.isArray(context.history) ? context.history.slice(-6) : [];
+
+  const conversationText = history
+    .map(h => `${h.role === 'user' ? 'Candidate' : 'OfferForge Assistant'}: ${h.text}`)
+    .join('\n');
+
+  const prompt = `You are OfferForge AI Assistant, a friendly, ultra-smart, and helpful AI co-pilot embedded inside the OfferForge AI platform.
+You have real-time visibility into what the candidate is doing on their screen.
+
+LIVE SESSION & SCREEN CONTEXT:
+- Candidate Name: ${userName}
+- Target Role: ${targetRole}
+- Current Page Route: ${currentRoute} (${pageTitle})
+- Screen Summary & Visible Content: ${screenSummary}
+
+${conversationText ? `CONVERSATION HISTORY:\n${conversationText}\n` : ''}
+CANDIDATE QUESTION: ${message}
+
+Instructions:
+- Provide a clear, concise, highly intelligent, and direct response.
+- Refer naturally to what the candidate is currently looking at on their screen if relevant.
+- Keep tone encouraging, technical, and professional.
+- Format output with clean markdown bullet points and code blocks if applicable.`;
+
+  try {
+    const responseText = await callAI(prompt, { temperature: 0.7, maxTokens: 1500, maxOutputTokens: 1500 });
+    if (responseText) return responseText;
+  } catch (err) {
+    console.warn(`[AI Warning] Chat assistant call failed (${err.message}). Using intelligent contextual response.`);
+  }
+
+  // Context-aware smart fallback response
+  if (currentRoute.includes('/resume')) {
+    return `I see you're currently on the **ATS Resume Intelligence** page, ${userName}! You can upload your resume to analyze keyword gaps for **${targetRole}** or click **"✨ Generate 95%+ ATS Optimized Resume"** to automatically re-architect your resume with high-impact metric bullet points. Let me know if you need help tailoring any specific section!`;
+  } else if (currentRoute.includes('/interview')) {
+    return `You're currently in an active **AI Mock Interview** session! Take your time to structure your response using clear technical definitions, system architecture patterns, time/space complexity trade-offs, and metrics. If you need a hint or want to skip, use the control buttons at the top. You've got this!`;
+  } else if (currentRoute.includes('/dashboard')) {
+    return `Welcome to your **OfferForge AI Dashboard**, ${userName}! Here you can launch new mock interview rounds, select target role parameters (**${targetRole}**), track your average & highest score analytics, and jump straight to ATS resume scanning. What would you like to practice today?`;
+  } else {
+    return `Hello ${userName}! I am your **OfferForge AI Co-Pilot**. I'm actively watching your session on ${currentRoute}. I can help you prepare for technical interviews, analyze system design trade-offs, optimize your resume for ATS parsers, or guide you through any feature on OfferForge AI. How can I assist you right now?`;
+  }
+}
+
+module.exports = { generateQuestions, evaluateResponse, generateOverallFeedback, analyzeResume, generateOptimizedResume, chatWithContext, getAIStatus };

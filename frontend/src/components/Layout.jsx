@@ -2,6 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Cpu, FileText, LayoutDashboard, LogOut, Sparkles, User, ShieldCheck } from 'lucide-react';
 import { clearAuth, getToken, getUser } from '../services/auth';
 import CyberBackground from './CyberBackground';
+import AIChatWidget from './AIChatWidget';
 
 export default function Layout({ children, showNav = true }) {
   const navigate = useNavigate();
@@ -144,6 +145,9 @@ export default function Layout({ children, showNav = true }) {
       )}
 
       <main className="flex-1 relative z-10">{children}</main>
+
+      {/* Global Draggable Floating AI Chatbot Widget */}
+      <AIChatWidget />
 
       {/* Black & Glowing White Footer */}
       <footer className="relative z-10 border-t border-white/20 bg-black">
