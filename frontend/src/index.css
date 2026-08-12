@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --bg-black: #000000;
+  --bg-surface: #050505;
+  --card-bg: rgba(10, 10, 10, 0.85);
+  --card-border: rgba(255, 255, 255, 0.15);
+  --glow-white: rgba(255, 255, 255, 0.8);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background-color: #000000;
+  color: #ffffff;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.3);
+  color: #000000;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #222222;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ffffff;
+}
+
+@layer components {
+  /* Pitch Black App Shell */
+  .app-shell {
+    min-height: 100vh;
+    background: 
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.07) 0%, transparent 50%),
+      #000000;
+    contain: content;
+  }
+
+  /* Glowing White Text Utilities */
+  .text-glow-white {
+    color: #ffffff;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 25px rgba(255, 255, 255, 0.3);
+  }
+
+  .text-glow-subtle {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+  }
+
+  /* Sleek Monochrome Black & Glowing White Card */
+  .calm-card, .hud-panel, .cyber-card {
+    position: relative;
+    background: rgba(8, 8, 8, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 1.25rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(12px);
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .calm-card:hover, .hud-panel:hover, .cyber-card:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 12px 40px rgba(255, 255, 255, 0.12), inset 0 0 20px rgba(255, 255, 255, 0.05);
+  }
+
+  /* Glowing White Button */
+  .calm-button, .cyber-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background: #ffffff;
+    color: #000000;
+    font-weight: 700;
+    padding: 0.625rem 1.25rem;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .calm-button:hover, .cyber-button:hover {
+    background: #e2e8f0;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
+    transform: translateY(-1px);
+  }
+
+  .calm-button-outline, .cyber-button-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
+    transition: all 0.2s ease;
+  }
+
+  .calm-button-outline:hover, .cyber-button-outline:hover {
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+  }
+
+  /* Glowing White Input */
+  .calm-input, .cyber-input {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #050505;
+    color: #ffffff;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+  }
+
+  .calm-input:focus, .cyber-input:focus {
+    outline: none;
+    border-color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  }
+
+  /* Soft Reveal Animation */
+  .reveal-up {
+    animation: revealUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes revealUp {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 10px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+}
