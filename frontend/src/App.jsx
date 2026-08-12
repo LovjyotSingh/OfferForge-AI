@@ -20,12 +20,17 @@ function PrivateRoute({ children }) {
 
 function AppLoader() {
   return (
-    <div className="app-shell flex min-h-screen items-center justify-center px-4 bg-slate-950 text-white font-mono">
-      <div className="hud-panel rounded-2xl p-6 text-center border-sky-500/30 bg-slate-900/90 shadow-2xl">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/40">
+    <div className="flex min-h-screen items-center justify-center px-4 bg-black text-white font-mono">
+      <div className="w-full max-w-sm rounded-2xl p-8 text-center border border-white/20 bg-black/90 shadow-2xl backdrop-blur-md">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-black font-bold shadow-[0_0_20px_rgba(255,255,255,0.4)]">
           <BrainCircuit size={24} className="animate-spin" />
         </div>
-        <div className="text-xs font-bold text-sky-300 uppercase tracking-wider">Loading OfferForge AI Matrix...</div>
+        <div className="text-xs font-black uppercase tracking-widest text-white">Loading OfferForge AI...</div>
+        <div className="mt-4 flex justify-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-white animate-ping"></div>
+          <div className="h-1.5 w-1.5 rounded-full bg-white animate-ping [animation-delay:0.2s]"></div>
+          <div className="h-1.5 w-1.5 rounded-full bg-white animate-ping [animation-delay:0.4s]"></div>
+        </div>
       </div>
     </div>
   );
