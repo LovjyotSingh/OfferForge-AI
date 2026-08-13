@@ -3,6 +3,7 @@ import { Cpu, FileText, LayoutDashboard, LogOut, Sparkles, User, ShieldCheck } f
 import { clearAuth, getToken, getUser } from '../services/auth';
 import CyberBackground from './CyberBackground';
 import AIChatWidget from './AIChatWidget';
+import ThemeSelector from './ThemeSelector';
 
 export default function Layout({ children, showNav = true }) {
   const navigate = useNavigate();
@@ -37,8 +38,10 @@ export default function Layout({ children, showNav = true }) {
                 COPYRIGHT © 2026 LOVJYOT SINGH
               </span>
             </div>
-            <div className="flex items-center gap-2 text-white/80 font-semibold">
-              <span>POWERED BY GEMINI AI</span>
+            <div className="flex items-center gap-3 text-white/80 font-semibold">
+              <ThemeSelector />
+              <span className="hidden sm:inline-block text-white/30">|</span>
+              <span className="hidden sm:inline-block">POWERED BY GEMINI AI</span>
             </div>
           </div>
 

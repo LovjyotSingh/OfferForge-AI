@@ -2,23 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* ----------------------------------------------------
+   THEME ENGINE (Dark, Light, Cyber Blue-Green Gradient)
+   ---------------------------------------------------- */
+
+:root, html[data-theme='dark'] {
   color-scheme: dark;
-  --bg-black: #000000;
-  --bg-surface: #050505;
-  --card-bg: rgba(10, 10, 10, 0.85);
-  --card-border: rgba(255, 255, 255, 0.15);
-  --glow-white: rgba(255, 255, 255, 0.8);
+  --app-bg: #000000;
+  --app-text: #ffffff;
+  --app-text-muted: rgba(255, 255, 255, 0.7);
+  --app-card-bg: rgba(8, 8, 8, 0.92);
+  --app-card-border: rgba(255, 255, 255, 0.15);
+  --app-header-bg: rgba(0, 0, 0, 0.9);
+  --app-button-bg: #ffffff;
+  --app-button-text: #000000;
+  --app-accent-glow: rgba(255, 255, 255, 0.6);
+  --app-input-bg: #050505;
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+  --app-bg: #f8fafc;
+  --app-text: #0f172a;
+  --app-text-muted: #475569;
+  --app-card-bg: rgba(255, 255, 255, 0.96);
+  --app-card-border: rgba(0, 0, 0, 0.12);
+  --app-header-bg: rgba(255, 255, 255, 0.92);
+  --app-button-bg: #0f172a;
+  --app-button-text: #ffffff;
+  --app-accent-glow: rgba(37, 99, 235, 0.4);
+  --app-input-bg: #ffffff;
+}
+
+html[data-theme='cyber'] {
+  color-scheme: dark;
+  --app-bg: linear-gradient(135deg, #051329 0%, #0d3b66 45%, #064e3b 100%);
+  --app-text: #ffffff;
+  --app-text-muted: rgba(226, 232, 240, 0.8);
+  --app-card-bg: rgba(10, 25, 47, 0.88);
+  --app-card-border: rgba(56, 189, 248, 0.35);
+  --app-header-bg: rgba(5, 19, 41, 0.92);
+  --app-button-bg: linear-gradient(135deg, #38bdf8 0%, #10b981 100%);
+  --app-button-text: #051329;
+  --app-accent-glow: rgba(56, 189, 248, 0.6);
+  --app-input-bg: rgba(6, 30, 58, 0.9);
 }
 
 body {
   margin: 0;
   min-width: 320px;
-  background-color: #000000;
-  color: #ffffff;
+  background: var(--app-bg);
+  color: var(--app-text);
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 html {
@@ -40,44 +78,44 @@ html {
   height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #222222;
+  background: rgba(150, 150, 150, 0.3);
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--app-card-border);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ffffff;
+  background: var(--app-text);
 }
 
 @layer components {
-  /* Pitch Black App Shell */
+  /* Dynamic App Shell */
   .app-shell {
     min-height: 100vh;
-    background: 
-      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.07) 0%, transparent 50%),
-      #000000;
+    background: var(--app-bg);
+    color: var(--app-text);
+    transition: background 0.3s ease;
   }
 
-  /* Glowing White Text Utilities */
+  /* Glowing Text Utilities */
   .text-glow-white {
-    color: #ffffff;
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 25px rgba(255, 255, 255, 0.3);
+    color: var(--app-text);
+    text-shadow: 0 0 12px var(--app-accent-glow);
   }
 
   .text-glow-subtle {
-    color: #ffffff;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+    color: var(--app-text);
+    text-shadow: 0 0 8px var(--app-accent-glow);
   }
 
-  /* Sleek Monochrome Black & Glowing White Card */
+  /* Theme-Aware Sleek Card */
   .calm-card, .hud-panel, .cyber-card {
     position: relative;
-    background: rgba(8, 8, 8, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--app-card-bg);
+    border: 1px solid var(--app-card-border);
     border-radius: 1.25rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.02);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
     backdrop-filter: blur(12px);
     transform: translate3d(0, 0, 0);
     will-change: transform;
@@ -85,28 +123,28 @@ html {
   }
 
   .calm-card:hover, .hud-panel:hover, .cyber-card:hover {
-    border-color: rgba(255, 255, 255, 0.5);
-    box-shadow: 0 12px 40px rgba(255, 255, 255, 0.12), inset 0 0 20px rgba(255, 255, 255, 0.05);
+    border-color: var(--app-accent-glow);
+    box-shadow: 0 12px 40px var(--app-accent-glow);
   }
 
-  /* Glowing White Button */
+  /* Theme-Aware Button */
   .calm-button, .cyber-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 0.75rem;
-    background: #ffffff;
-    color: #000000;
+    background: var(--app-button-bg);
+    color: var(--app-button-text);
     font-weight: 700;
     padding: 0.625rem 1.25rem;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 20px var(--app-accent-glow);
     transition: all 0.2s ease;
   }
 
   .calm-button:hover, .cyber-button:hover {
-    background: #e2e8f0;
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
+    opacity: 0.92;
     transform: translateY(-1px);
+    box-shadow: 0 0 25px var(--app-accent-glow);
   }
 
   .calm-button-outline, .cyber-button-outline {
@@ -114,27 +152,26 @@ html {
     align-items: center;
     justify-content: center;
     border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(0, 0, 0, 0.8);
-    color: #ffffff;
+    border: 1px solid var(--app-card-border);
+    background: var(--app-card-bg);
+    color: var(--app-text);
     font-weight: 600;
     padding: 0.625rem 1.25rem;
     transition: all 0.2s ease;
   }
 
   .calm-button-outline:hover, .cyber-button-outline:hover {
-    border-color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    border-color: var(--app-text);
+    box-shadow: 0 0 15px var(--app-accent-glow);
   }
 
-  /* Glowing White Input */
+  /* Theme-Aware Input */
   .calm-input, .cyber-input {
     width: 100%;
     border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: #050505;
-    color: #ffffff;
+    border: 1px solid var(--app-card-border);
+    background: var(--app-input-bg);
+    color: var(--app-text);
     padding: 0.625rem 1rem;
     font-size: 0.875rem;
     transition: all 0.2s ease;
@@ -142,8 +179,8 @@ html {
 
   .calm-input:focus, .cyber-input:focus {
     outline: none;
-    border-color: #ffffff;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    border-color: var(--app-text);
+    box-shadow: 0 0 15px var(--app-accent-glow);
   }
 
   /* Soft Reveal Animation */

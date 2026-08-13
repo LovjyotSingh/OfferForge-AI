@@ -11,6 +11,9 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const InterviewPage = lazy(() => import('./pages/InterviewPage'));
 const ResumePage = lazy(() => import('./pages/ResumePage'));
 
+const savedTheme = localStorage.getItem('offerforge_theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+
 clearLegacyAuth();
 
 function PrivateRoute({ children }) {
