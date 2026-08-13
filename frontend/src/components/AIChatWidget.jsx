@@ -312,13 +312,13 @@ export default function AIChatWidget() {
         onClick={handleCircleClick}
         className="fixed cursor-grab active:cursor-grabbing group transition-transform hover:scale-110 flex items-center justify-center"
       >
-        <div className="relative flex h-14 w-14 items-center justify-center rounded-full border border-white/30 bg-black/90 text-white shadow-[0_0_25px_rgba(255,255,255,0.35)] backdrop-blur-md">
-          <Bot size={24} className="text-white group-hover:rotate-12 transition-transform pointer-events-none" />
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-full calm-card shadow-lg backdrop-blur-md">
+          <Bot size={24} className="group-hover:rotate-12 transition-transform pointer-events-none" />
           <span className="absolute -top-1 -right-1 flex h-4 w-4 pointer-events-none">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-4 w-4 bg-white border-2 border-black"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-4 w-4 bg-current border-2 border-inherit"></span>
           </span>
-          <div className="absolute -bottom-1 text-[8px] font-extrabold uppercase text-white/60 flex items-center pointer-events-none">
+          <div className="absolute -bottom-1 text-[8px] font-extrabold uppercase opacity-60 flex items-center pointer-events-none">
             <GripVertical size={10} />
           </div>
         </div>
@@ -332,7 +332,7 @@ export default function AIChatWidget() {
             top: `${chatPos.y}px`,
             touchAction: 'none',
           }}
-          className={`fixed z-[99999] w-[92vw] sm:w-[410px] rounded-2xl border border-white/25 bg-black/95 text-white shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-xl transition-all duration-150 ${
+          className={`fixed z-[99999] w-[92vw] sm:w-[410px] rounded-2xl calm-card shadow-2xl backdrop-blur-xl transition-all duration-150 ${
             isMinimized ? 'h-16 overflow-hidden' : 'h-[520px] max-h-[80vh] flex flex-col'
           }`}
         >
@@ -342,19 +342,19 @@ export default function AIChatWidget() {
             onPointerMove={handleChatPointerMove}
             onPointerUp={handleChatPointerUp}
             onPointerCancel={handleChatPointerUp}
-            className="flex items-center justify-between border-b border-white/20 px-3.5 py-2.5 bg-black/90 cursor-grab active:cursor-grabbing hover:bg-white/5 transition"
+            className="flex items-center justify-between border-b border-inherit px-3.5 py-2.5 theme-header cursor-grab active:cursor-grabbing hover:opacity-90 transition rounded-t-2xl"
           >
             <div className="flex items-center gap-2 pointer-events-none">
-              <GripHorizontal size={14} className="text-white/50" />
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-black font-bold">
+              <GripHorizontal size={14} className="opacity-50" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg calm-button font-bold">
                 <Sparkles size={14} />
               </div>
               <div>
                 <div className="text-xs font-black uppercase text-glow-white flex items-center gap-1.5 leading-none">
                   OfferForge AI Co-Pilot
                 </div>
-                <div className="text-[9px] text-white/60 flex items-center gap-1 font-mono mt-0.5">
-                  <Eye size={10} className="text-white animate-pulse" />
+                <div className="text-[9px] opacity-60 flex items-center gap-1 font-mono mt-0.5">
+                  <Eye size={10} className="animate-pulse" />
                   <span>Watching: {location.pathname}</span>
                 </div>
               </div>
@@ -363,7 +363,7 @@ export default function AIChatWidget() {
             <div className="flex items-center gap-1" onPointerDown={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setIsMinimized((prev) => !prev)}
-                className="rounded-lg p-1.5 text-white/60 hover:bg-white/10 hover:text-white transition"
+                className="rounded-lg p-1.5 opacity-60 hover:opacity-100 hover:bg-current/10 transition"
                 title={isMinimized ? 'Maximize' : 'Minimize'}
               >
                 {isMinimized ? <Maximize2 size={13} /> : <Minimize2 size={13} />}
@@ -379,14 +379,14 @@ export default function AIChatWidget() {
                     },
                   ]);
                 }}
-                className="rounded-lg p-1.5 text-white/60 hover:bg-white/10 hover:text-white transition"
+                className="rounded-lg p-1.5 opacity-60 hover:opacity-100 hover:bg-current/10 transition"
                 title="Reset Chat"
               >
                 <RefreshCw size={13} />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg p-1.5 text-white/60 hover:bg-white/10 hover:text-white transition"
+                className="rounded-lg p-1.5 opacity-60 hover:opacity-100 hover:bg-current/10 transition"
                 title="Close Chat"
               >
                 <X size={13} />
@@ -406,14 +406,14 @@ export default function AIChatWidget() {
                     <div
                       className={`max-w-[85%] rounded-2xl p-3 leading-relaxed font-mono ${
                         m.role === 'user'
-                          ? 'bg-white text-black font-semibold rounded-br-none shadow-md'
-                          : 'bg-black/90 border border-white/20 text-white/95 rounded-bl-none'
+                          ? 'calm-button font-semibold rounded-br-none shadow-md'
+                          : 'border border-inherit bg-current/5 rounded-bl-none'
                       }`}
                     >
                       <div className="whitespace-pre-wrap text-xs">{m.text}</div>
                       <div
                         className={`text-[9px] mt-1 text-right font-mono ${
-                          m.role === 'user' ? 'text-black/60' : 'text-white/40'
+                          m.role === 'user' ? 'opacity-70' : 'opacity-50'
                         }`}
                       >
                         {m.time}
@@ -424,8 +424,8 @@ export default function AIChatWidget() {
 
                 {loading && (
                   <div className="flex justify-start">
-                    <div className="rounded-2xl rounded-bl-none border border-white/20 bg-black/90 p-3 text-xs text-white/80 font-mono flex items-center gap-2">
-                      <Sparkles size={13} className="animate-spin text-white" />
+                    <div className="rounded-2xl rounded-bl-none border border-inherit bg-current/5 p-3 text-xs opacity-80 font-mono flex items-center gap-2">
+                      <Sparkles size={13} className="animate-spin" />
                       <span>Analyzing screen context & crafting response...</span>
                     </div>
                   </div>
@@ -433,13 +433,13 @@ export default function AIChatWidget() {
               </div>
 
               {/* Quick Prompts */}
-              <div className="px-3 py-1.5 border-t border-white/10 overflow-x-auto flex gap-1.5 scrollbar-none font-mono">
+              <div className="px-3 py-1.5 border-t border-inherit overflow-x-auto flex gap-1.5 scrollbar-none font-mono">
                 {quickPrompts.map((qp, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSendMessage(qp)}
                     disabled={loading}
-                    className="shrink-0 text-[9.5px] font-bold border border-white/20 bg-white/5 hover:bg-white/15 text-white/90 rounded-lg px-2.5 py-1 transition"
+                    className="shrink-0 text-[9.5px] font-bold border border-inherit bg-current/5 hover:bg-current/15 rounded-lg px-2.5 py-1 transition"
                   >
                     {qp}
                   </button>
@@ -452,14 +452,14 @@ export default function AIChatWidget() {
                   e.preventDefault();
                   handleSendMessage();
                 }}
-                className="p-2.5 border-t border-white/20 bg-black flex items-center gap-2"
+                className="p-2.5 border-t border-inherit flex items-center gap-2 theme-header rounded-b-2xl"
               >
                 <input
                   type="text"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Ask AI Co-Pilot (watches your screen)..."
-                  className="flex-1 calm-input text-xs bg-black text-white border-white/30 px-3 py-1.5 font-mono"
+                  className="flex-1 calm-input text-xs px-3 py-1.5 font-mono"
                   disabled={loading}
                 />
                 <button

@@ -38,71 +38,71 @@ export default function Register() {
 
   return (
     <Layout>
-      <div className="mx-auto flex min-h-[80vh] max-w-md items-center justify-center px-4 py-12 bg-black text-white">
-        <div className="reveal-up calm-card w-full rounded-2xl p-6 sm:p-8 border-white/20 bg-black/90 font-mono">
+      <div className="mx-auto flex min-h-[80vh] max-w-md items-center justify-center px-4 py-12 font-mono">
+        <div className="reveal-up calm-card w-full rounded-2xl p-6 sm:p-8">
           <div className="text-center mb-6">
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-black font-bold">
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl calm-button font-bold">
               <Cpu size={20} />
             </div>
             <h1 className="text-2xl font-black text-glow-white">Create Account</h1>
-            <p className="text-xs text-white/70 mt-1">Start placement preparation with OfferForge AI</p>
+            <p className="text-xs opacity-70 mt-1">Start placement preparation with OfferForge AI</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase text-white/80 mb-1.5">Full Name</label>
+              <label className="block text-xs font-bold uppercase opacity-80 mb-1.5">Full Name</label>
               <div className="relative">
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Lovjyot Singh"
-                  className="calm-input text-xs pl-9 bg-black text-white border-white/30"
+                  className="calm-input text-xs pl-9"
                   required
                 />
-                <User size={14} className="absolute left-3 top-3 text-white/60" />
+                <User size={14} className="absolute left-3 top-3 opacity-60" />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase text-white/80 mb-1.5">Email Address</label>
+              <label className="block text-xs font-bold uppercase opacity-80 mb-1.5">Email Address</label>
               <div className="relative">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="calm-input text-xs pl-9 bg-black text-white border-white/30"
+                  className="calm-input text-xs pl-9"
                   required
                 />
-                <Mail size={14} className="absolute left-3 top-3 text-white/60" />
+                <Mail size={14} className="absolute left-3 top-3 opacity-60" />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase text-white/80 mb-1.5">Password</label>
+              <label className="block text-xs font-bold uppercase opacity-80 mb-1.5">Password</label>
               <div className="relative">
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="calm-input text-xs pl-9 bg-black text-white border-white/30"
+                  className="calm-input text-xs pl-9"
                   required
                 />
-                <Lock size={14} className="absolute left-3 top-3 text-white/60" />
+                <Lock size={14} className="absolute left-3 top-3 opacity-60" />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase text-white/80 mb-1.5">Target Role</label>
+              <label className="block text-xs font-bold uppercase opacity-80 mb-1.5">Target Role</label>
               <select
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
-                className="calm-input text-xs font-bold bg-black text-white border-white/30"
+                className="calm-input text-xs font-bold"
               >
                 {ROLES.map((r) => (
-                  <option key={r} value={r} className="bg-black text-white">
+                  <option key={r} value={r} className="bg-slate-900 text-white">
                     {r}
                   </option>
                 ))}
@@ -119,9 +119,9 @@ export default function Register() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-white/80">
+          <div className="mt-6 text-center text-xs opacity-80">
             Already have an account?{' '}
-            <Link to="/login" className="font-bold text-white underline hover:text-glow-white">
+            <Link to="/login" className="font-bold underline hover:text-glow-white">
               Log In
             </Link>
           </div>

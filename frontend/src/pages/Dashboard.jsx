@@ -1,17 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowRight,
   BarChart3,
   BookOpenCheck,
   Cpu,
   FileText,
   Gauge,
-  Medal,
   Play,
   TrendingUp,
   Activity,
-  Zap,
 } from 'lucide-react';
 import { Line, LineChart, PolarAngleAxis, PolarGrid, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import toast from 'react-hot-toast';
@@ -76,22 +73,22 @@ export default function Dashboard() {
     {
       label: 'HIGHEST SCORE',
       value: `${stats?.overview?.highestScore || 0}%`,
-      icon: Medal,
+      icon: TrendingUp,
     },
   ];
 
   return (
     <Layout>
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10 text-white font-sans bg-black">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10 font-sans">
         {/* Main Launcher Card */}
         <section className="reveal-up grid gap-6 lg:grid-cols-[1fr_22rem]">
-          <div className="calm-card rounded-2xl p-6 border-white/20 bg-black/90 sm:p-8">
+          <div className="calm-card rounded-2xl p-6 sm:p-8">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div>
                 <h1 className="text-2xl font-black sm:text-3xl text-glow-white">
-                  Welcome back, <span className="text-white underline">{user?.name || 'Candidate'}</span>
+                  Welcome back, <span className="underline">{user?.name || 'Candidate'}</span>
                 </h1>
-                <p className="mt-1 text-xs text-white/70 font-mono">
+                <p className="mt-1 text-xs opacity-70 font-mono">
                   Select role parameters & launch real-time AI evaluation.
                 </p>
               </div>
@@ -107,14 +104,14 @@ export default function Dashboard() {
             {/* Launch Form Controls */}
             <div className="mt-6 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end font-mono">
               <label className="block">
-                <span className="mb-1.5 block text-xs font-bold uppercase text-white/80">Target Role</span>
+                <span className="mb-1.5 block text-xs font-bold uppercase opacity-80">Target Role</span>
                 <select
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value)}
-                  className="calm-input text-xs font-bold bg-black text-white border-white/30"
+                  className="calm-input text-xs font-bold"
                 >
                   {ROLES.map((role) => (
-                    <option key={role} value={role} className="bg-black text-white">
+                    <option key={role} value={role} className="bg-slate-900 text-white">
                       {role}
                     </option>
                   ))}
@@ -122,19 +119,19 @@ export default function Dashboard() {
               </label>
 
               <label className="block">
-                <span className="mb-1.5 block text-xs font-bold uppercase text-white/80">Difficulty</span>
+                <span className="mb-1.5 block text-xs font-bold uppercase opacity-80">Difficulty</span>
                 <select
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
-                  className="calm-input text-xs font-bold bg-black text-white border-white/30"
+                  className="calm-input text-xs font-bold"
                 >
-                  <option value="easy" className="bg-black text-white">
+                  <option value="easy" className="bg-slate-900 text-white">
                     Easy (Foundational)
                   </option>
-                  <option value="medium" className="bg-black text-white">
+                  <option value="medium" className="bg-slate-900 text-white">
                     Medium (Standard)
                   </option>
-                  <option value="hard" className="bg-black text-white">
+                  <option value="hard" className="bg-slate-900 text-white">
                     Hard (Advanced Architecture)
                   </option>
                 </select>
@@ -154,30 +151,30 @@ export default function Dashboard() {
           </div>
 
           {/* Response Tips Card */}
-          <div className="calm-card rounded-2xl p-6 border-white/20 bg-black/90 flex flex-col justify-between">
+          <div className="calm-card rounded-2xl p-6 flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2.5 border-b border-white/20 pb-3 font-mono">
-                <Cpu size={18} className="text-white" />
-                <div className="text-sm font-bold text-white uppercase tracking-wider">Response Protocol</div>
+              <div className="flex items-center gap-2.5 border-b border-inherit pb-3 font-mono">
+                <Cpu size={18} />
+                <div className="text-sm font-bold uppercase tracking-wider">Response Protocol</div>
               </div>
-              <div className="mt-4 space-y-2 text-xs text-white/80 font-sans">
+              <div className="mt-4 space-y-2 text-xs opacity-80 font-sans">
                 <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
                   <span>Lead with quantifiable impact</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
                   <span>Explain technical tradeoffs</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
                   <span>Summarize key architecture</span>
                 </div>
               </div>
             </div>
-            <div className="mt-4 flex items-center justify-between text-[11px] text-white/80 font-mono">
+            <div className="mt-4 flex items-center justify-between text-[11px] opacity-80 font-mono">
               <span>STATUS: READY</span>
-              <Activity size={14} className="text-white animate-pulse" />
+              <Activity size={14} className="animate-pulse" />
             </div>
           </div>
         </section>
@@ -190,7 +187,7 @@ export default function Dashboard() {
         {loading ? (
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {[0, 1, 2].map((item) => (
-              <div key={item} className="h-28 animate-pulse rounded-2xl bg-black border border-white/20" />
+              <div key={item} className="h-28 animate-pulse rounded-2xl calm-card" />
             ))}
           </div>
         ) : (
@@ -200,10 +197,10 @@ export default function Dashboard() {
               {statCards.map((card) => {
                 const IconComponent = card.icon;
                 return (
-                  <div key={card.label} className="calm-card rounded-2xl p-5 border-white/20 bg-black/90">
+                  <div key={card.label} className="calm-card rounded-2xl p-5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-white/80 uppercase tracking-wider font-mono">{card.label}</span>
-                      <IconComponent size={18} className="text-white" />
+                      <span className="text-[11px] font-bold opacity-80 uppercase tracking-wider font-mono">{card.label}</span>
+                      <IconComponent size={18} />
                     </div>
                     <div className="mt-3 text-3xl font-black text-glow-white">{card.value}</div>
                   </div>
@@ -214,28 +211,28 @@ export default function Dashboard() {
             {/* Performance Analytics Charts */}
             <section className="mt-8 grid gap-6 lg:grid-cols-2">
               {/* Score Trend Line Chart */}
-              <div className="calm-card rounded-2xl p-6 border-white/20 bg-black/90">
+              <div className="calm-card rounded-2xl p-6">
                 <div className="mb-4 flex items-center justify-between font-mono">
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <TrendingUp size={16} className="text-white" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                    <TrendingUp size={16} />
                     Performance Progress Trend
                   </h3>
-                  <span className="text-[10px] text-white/70">LAST 10 SESSIONS</span>
+                  <span className="text-[10px] opacity-70">LAST 10 SESSIONS</span>
                 </div>
                 <div className="h-60 w-full">
                   {stats?.trend?.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={stats.trend}>
-                        <XAxis dataKey="date" stroke="#ffffff" fontSize={11} tickLine={false} />
-                        <YAxis domain={[0, 100]} stroke="#ffffff" fontSize={11} tickLine={false} />
+                        <XAxis dataKey="date" stroke="currentColor" fontSize={11} tickLine={false} />
+                        <YAxis domain={[0, 100]} stroke="currentColor" fontSize={11} tickLine={false} />
                         <Tooltip
-                          contentStyle={{ background: '#000000', borderColor: '#ffffff', borderRadius: '0.75rem', color: '#fff' }}
+                          contentStyle={{ background: 'var(--app-card-bg)', borderColor: 'var(--app-card-border)', borderRadius: '0.75rem', color: 'var(--app-text)' }}
                         />
-                        <Line type="monotone" dataKey="score" stroke="#ffffff" strokeWidth={2.5} dot={{ r: 4, fill: '#ffffff' }} />
+                        <Line type="monotone" dataKey="score" stroke="currentColor" strokeWidth={2.5} dot={{ r: 4, fill: 'currentColor' }} />
                       </LineChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-white/60 font-mono">
+                    <div className="flex h-full items-center justify-center text-xs opacity-60 font-mono">
                       Complete your first interview round to render trend data.
                     </div>
                   )}
@@ -243,19 +240,19 @@ export default function Dashboard() {
               </div>
 
               {/* Skill Radar Chart */}
-              <div className="calm-card rounded-2xl p-6 border-white/20 bg-black/90">
+              <div className="calm-card rounded-2xl p-6">
                 <div className="mb-4 flex items-center justify-between font-mono">
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <BarChart3 size={16} className="text-white" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                    <BarChart3 size={16} />
                     Skill Breakdown Matrix
                   </h3>
                 </div>
                 <div className="h-60 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart data={radarData}>
-                      <PolarGrid stroke="#444444" />
-                      <PolarAngleAxis dataKey="subject" stroke="#ffffff" fontSize={11} />
-                      <Radar name="Score" dataKey="score" stroke="#ffffff" fill="#ffffff" fillOpacity={0.25} />
+                      <PolarGrid stroke="rgba(150,150,150,0.3)" />
+                      <PolarAngleAxis dataKey="subject" stroke="currentColor" fontSize={11} />
+                      <Radar name="Score" dataKey="score" stroke="currentColor" fill="currentColor" fillOpacity={0.25} />
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>

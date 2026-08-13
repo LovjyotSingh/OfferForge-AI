@@ -58,14 +58,15 @@ export default function ResumePage() {
     setGeneratingOptimized(true);
     try {
       const res = await api.post('/resume/optimize', {
+        resumeText: resultData?.extractedText || '',
         targetRole,
-        missingKeywords,
-        improvements,
+        missingKeywords: resultData?.missingKeywords || [],
+        improvements: resultData?.improvements || [],
       });
       setOptimizedData(res.data.data);
-      toast.success('Generated 95%+ ATS Optimized Resume!');
+      toast.success('95%+ ATS Optimized Resume generated!');
     } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Could not generate optimized resume'));
+      toast.error(getApiErrorMessage(err, 'Failed to generate optimized resume'));
     } finally {
       setGeneratingOptimized(false);
     }
@@ -89,37 +90,37 @@ export default function ResumePage() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-10 text-white font-sans bg-black">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-10 font-sans">
         {/* Header */}
         <div className="reveal-up mb-8 text-center max-w-2xl mx-auto">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/10 px-3.5 py-1 text-xs text-white font-bold font-mono">
-            <Sparkles size={14} className="text-white animate-pulse" />
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-inherit bg-current/10 px-3.5 py-1 text-xs font-bold font-mono">
+            <Sparkles size={14} className="animate-pulse" />
             ATS RESUME INTELLIGENCE & GENERATOR
           </div>
           <h1 className="text-3xl font-black text-glow-white sm:text-4xl">
             Optimize Your Resume for ATS
           </h1>
-          <p className="mt-2 text-xs text-white/70 font-mono">
+          <p className="mt-2 text-xs opacity-70 font-mono">
             Upload your resume to analyze ATS compatibility score and generate a 95%+ optimized resume with missing keywords incorporated.
           </p>
         </div>
 
         {/* Main Upload Box */}
-        <div className="reveal-up calm-card rounded-2xl p-6 sm:p-8 border-white/20 bg-black/90 max-w-3xl mx-auto font-mono">
+        <div className="reveal-up calm-card rounded-2xl p-6 sm:p-8 max-w-3xl mx-auto font-mono">
           <div className="grid gap-4 sm:grid-cols-[1fr_auto] items-end mb-6">
             <label className="block">
-              <span className="block text-xs font-bold uppercase text-white/80 mb-1.5">Target Job Role</span>
+              <span className="block text-xs font-bold uppercase opacity-80 mb-1.5">Target Job Role</span>
               <select
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
-                className="calm-input text-xs font-bold bg-black text-white border-white/30"
+                className="calm-input text-xs font-bold"
               >
-                <option value="SDE" className="bg-black text-white">Software Development Engineer (SDE)</option>
-                <option value="Frontend Developer" className="bg-black text-white">Frontend Developer</option>
-                <option value="Backend Developer" className="bg-black text-white">Backend Developer</option>
-                <option value="Data Analyst" className="bg-black text-white">Data Analyst / Data Scientist</option>
-                <option value="Business Analyst" className="bg-black text-white">Business Analyst</option>
-                <option value="Product Manager" className="bg-black text-white">Product Manager</option>
+                <option value="SDE" className="bg-slate-900 text-white">Software Development Engineer (SDE)</option>
+                <option value="Frontend Developer" className="bg-slate-900 text-white">Frontend Developer</option>
+                <option value="Backend Developer" className="bg-slate-900 text-white">Backend Developer</option>
+                <option value="Data Analyst" className="bg-slate-900 text-white">Data Analyst / Data Scientist</option>
+                <option value="Business Analyst" className="bg-slate-900 text-white">Business Analyst</option>
+                <option value="Product Manager" className="bg-slate-900 text-white">Product Manager</option>
               </select>
             </label>
 
@@ -133,28 +134,28 @@ export default function ResumePage() {
           </div>
 
           {/* File Dropzone */}
-          <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/30 bg-black p-8 text-center cursor-pointer hover:border-white transition">
+          <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-inherit bg-current/5 p-8 text-center cursor-pointer hover:border-current transition">
             <input type="file" accept=".pdf,.docx,.txt" onChange={handleFileChange} className="hidden" />
-            <UploadCloud size={32} className="text-white mb-2" />
-            <span className="text-xs font-bold text-white">
+            <UploadCloud size={32} className="mb-2" />
+            <span className="text-xs font-bold">
               {file ? file.name : 'Click to upload or drag PDF/DOCX/TXT file here'}
             </span>
-            <span className="text-[11px] text-white/60 mt-1">Maximum file size: 5MB</span>
+            <span className="text-[11px] opacity-60 mt-1">Maximum file size: 5MB</span>
           </label>
         </div>
 
         {/* Results Analysis View */}
         {resultData && (
           <div className="reveal-up mt-8 space-y-6 max-w-3xl mx-auto font-mono">
-            <div className="calm-card rounded-2xl p-6 border-white/20 bg-black/90">
-              <div className="flex items-center justify-between border-b border-white/20 pb-4 mb-6">
+            <div className="calm-card rounded-2xl p-6">
+              <div className="flex items-center justify-between border-b border-inherit pb-4 mb-6">
                 <div>
-                  <span className="text-xs text-white/80 font-bold uppercase">ATS COMPATIBILITY SCORE</span>
+                  <span className="text-xs opacity-80 font-bold uppercase">ATS COMPATIBILITY SCORE</span>
                   <div className="text-4xl font-black text-glow-white mt-1">
                     {score}%
                   </div>
                 </div>
-                <div className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/30 px-4 py-2 text-xs font-bold text-white">
+                <div className="flex items-center gap-2 rounded-xl border border-inherit bg-current/10 px-4 py-2 text-xs font-bold">
                   <CheckCircle2 size={16} />
                   <span>{score >= 75 ? 'Strong ATS Match' : 'Optimization Recommended'}</span>
                 </div>
@@ -163,10 +164,10 @@ export default function ResumePage() {
               {/* Missing Keywords Grid */}
               <div className="space-y-4 text-xs">
                 <div>
-                  <h4 className="font-bold text-white text-xs uppercase mb-2">Missing Recommended Keywords</h4>
+                  <h4 className="font-bold text-xs uppercase mb-2">Missing Recommended Keywords</h4>
                   <div className="flex flex-wrap gap-2">
                     {missingKeywords.map((kw, idx) => (
-                      <span key={idx} className="rounded-lg border border-white/30 bg-black px-2.5 py-1 text-white font-bold text-[11px]">
+                      <span key={idx} className="rounded-lg border border-inherit bg-current/10 px-2.5 py-1 font-bold text-[11px]">
                         + {kw}
                       </span>
                     ))}
@@ -175,11 +176,11 @@ export default function ResumePage() {
 
                 {/* Suggestions List */}
                 <div className="pt-2">
-                  <h4 className="font-bold text-white text-xs uppercase mb-2">Recommended Improvements</h4>
+                  <h4 className="font-bold text-xs uppercase mb-2">Recommended Improvements</h4>
                   <ul className="space-y-2 font-sans">
                     {improvements.map((s, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-white/90">
-                        <Sparkles size={13} className="text-white shrink-0" />
+                      <li key={idx} className="flex items-center gap-2 opacity-90">
+                        <Sparkles size={13} className="shrink-0" />
                         <span>{s}</span>
                       </li>
                     ))}
@@ -187,7 +188,7 @@ export default function ResumePage() {
                 </div>
 
                 {/* Action Button: Generate 95%+ Optimized Resume */}
-                <div className="pt-6 border-t border-white/20 text-center">
+                <div className="pt-6 border-t border-inherit text-center">
                   <button
                     onClick={handleGenerateOptimized}
                     disabled={generatingOptimized}
@@ -202,10 +203,10 @@ export default function ResumePage() {
 
             {/* Generated Optimized Resume View */}
             {optimizedData && (
-              <div className="calm-card rounded-2xl p-6 sm:p-8 border-white/30 bg-black/95 reveal-up font-mono">
-                <div className="flex items-center justify-between border-b border-white/20 pb-4 mb-6">
+              <div className="calm-card rounded-2xl p-6 sm:p-8 reveal-up font-mono">
+                <div className="flex items-center justify-between border-b border-inherit pb-4 mb-6">
                   <div>
-                    <span className="text-[11px] text-white/80 font-bold uppercase tracking-wider">PROJECTED ATS SCORE</span>
+                    <span className="text-[11px] opacity-80 font-bold uppercase tracking-wider">PROJECTED ATS SCORE</span>
                     <div className="text-3xl font-black text-glow-white mt-0.5">
                       {optimizedData.projectedAtsScore || 96}% ATS MATCH
                     </div>
@@ -220,12 +221,12 @@ export default function ResumePage() {
                 </div>
 
                 {optimizedData.summary && (
-                  <p className="text-xs text-white/80 mb-6 bg-white/5 border border-white/20 p-3.5 rounded-xl font-sans leading-relaxed">
+                  <p className="text-xs opacity-90 mb-6 bg-current/5 border border-inherit p-3.5 rounded-xl font-sans leading-relaxed">
                     💡 <strong>Enhancements Applied:</strong> {optimizedData.summary}
                   </p>
                 )}
 
-                <div className="rounded-xl border border-white/20 bg-black p-6 font-mono text-xs leading-relaxed text-white whitespace-pre-wrap selection:bg-white selection:text-black">
+                <div className="rounded-xl border border-inherit bg-current/5 p-6 font-mono text-xs leading-relaxed whitespace-pre-wrap">
                   {optimizedData.optimizedResume}
                 </div>
               </div>
