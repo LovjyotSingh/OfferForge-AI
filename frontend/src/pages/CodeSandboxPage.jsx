@@ -115,6 +115,13 @@ export default function CodeSandboxPage() {
   };
 
   const handleExplainSolution = async () => {
+    // Check built-in solution for selected language (Java, JavaScript, Python, C++)
+    if (selectedProblem.solution?.[language]) {
+      setSolutionExplanation(selectedProblem.solution[language]);
+      toast.success(`Solution & line-by-line guide loaded (${language.toUpperCase()})!`);
+      return;
+    }
+
     setExplaining(true);
     try {
       const res = await api.post('/ai/chat', {
