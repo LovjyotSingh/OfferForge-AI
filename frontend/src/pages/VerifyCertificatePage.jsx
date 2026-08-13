@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Award, CheckCircle2, ShieldCheck, Share2, ArrowLeft, Cpu } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Layout from '../components/Layout';
+import { getUser } from '../services/auth';
 
 export default function VerifyCertificatePage() {
   const { id } = useParams();
@@ -10,10 +10,11 @@ export default function VerifyCertificatePage() {
   const [certData, setCertData] = useState(null);
 
   useEffect(() => {
+    const user = getUser();
     // Generate deterministic verification record
     const mockCert = {
       certificateId: id || 'CERT-OF-96821',
-      candidateName: 'Lovjyot Singh',
+      candidateName: user?.name || 'Lovjyot Singh',
       targetRole: 'Software Development Engineer (SDE)',
       score: 96,
       technicalScore: 98,
