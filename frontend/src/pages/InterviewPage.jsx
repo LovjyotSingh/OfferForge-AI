@@ -74,12 +74,6 @@ export default function InterviewPage() {
       setPhase('question');
       setAnswer('');
       setFeedback(null);
-
-      // Auto-speak question audio when loaded
-      const qText = typeof data.question === 'string' ? data.question : (data.question?.question || '');
-      if (qText) {
-        setTimeout(() => speakQuestionAloud(qText), 400);
-      }
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Could not fetch next question'));
     } finally {
