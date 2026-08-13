@@ -37,22 +37,34 @@ export default function AIChatWidget() {
   const [circlePos, setCirclePos] = useState(() => {
     const saved = localStorage.getItem('offerforge_circle_pos');
     if (saved) {
-      try { return JSON.parse(saved); } catch {}
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.x && parsed.y && parsed.x < window.innerWidth && parsed.y < window.innerHeight) {
+          return parsed;
+        }
+      } catch {}
     }
-    const defaultX = Math.max(10, window.innerWidth - 80);
-    const defaultY = Math.max(10, window.innerHeight - 90);
-    return { x: defaultX, y: defaultY };
+    return {
+      x: Math.max(10, window.innerWidth - 80),
+      y: Math.max(10, window.innerHeight - 90),
+    };
   });
 
   // Chat Window Position
   const [chatPos, setChatPos] = useState(() => {
     const saved = localStorage.getItem('offerforge_chat_win_pos');
     if (saved) {
-      try { return JSON.parse(saved); } catch {}
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.x && parsed.y && parsed.x < window.innerWidth && parsed.y < window.innerHeight) {
+          return parsed;
+        }
+      } catch {}
     }
-    const defaultX = Math.max(10, window.innerWidth - 420);
-    const defaultY = Math.max(10, window.innerHeight - 580);
-    return { x: defaultX, y: defaultY };
+    return {
+      x: Math.max(10, window.innerWidth - 420),
+      y: Math.max(10, window.innerHeight - 580),
+    };
   });
 
   // Drag states
@@ -61,7 +73,28 @@ export default function AIChatWidget() {
   const circleDragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const chatDragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const circleMovedRef = useRef(false);
-  const chatEndRef = useRef(null);
+  const messageContainerRef = useRef(null);
+
+  // Keep within bounds on window resize/scroll
+  useEffect(() => {
+    const handleResizeOrScroll = () => {
+      setCirclePos((prev) => ({
+        x: Math.max(10, Math.min(window.innerWidth - 65, prev.x)),
+        y: Math.max(10, Math.min(window.innerHeight - 65, prev.y)),
+      }));
+      setChatPos((prev) => {
+        const chatWidth = Math.min(window.innerWidth - 20, 410);
+        const chatHeight = isMinimized ? 65 : 520;
+        return {
+          x: Math.max(10, Math.min(window.innerWidth - chatWidth - 10, prev.x)),
+          y: Math.max(10, Math.min(window.innerHeight - chatHeight - 10, prev.y)),
+        };
+      });
+    };
+
+    window.addEventListener('resize', handleResizeOrScroll);
+    return () => window.removeEventListener('resize', handleResizeOrScroll);
+  }, [isMinimized]);
 
   // Save Positions
   useEffect(() => {
@@ -71,8 +104,6 @@ export default function AIChatWidget() {
   useEffect(() => {
     localStorage.setItem('offerforge_chat_win_pos', JSON.stringify(chatPos));
   }, [chatPos]);
-
-  const messageContainerRef = useRef(null);
 
   // Auto Scroll internal message box only (never scrolls the outer page/window!)
   useEffect(() => {
@@ -129,122 +160,84 @@ export default function AIChatWidget() {
   };
 
   // ----------------------------------------------------
-  // CIRCLE BUTTON DRAG HANDLERS (With Touch Prevention)
+  // CIRCLE BUTTON POINTER DRAG HANDLERS (Pointer Capture)
   // ----------------------------------------------------
   const handleCirclePointerDown = (e) => {
-    if (e.touches && e.touches.length > 1) return;
-    if (e.cancelable) e.preventDefault(); // Prevent mobile page scrolling
+    e.preventDefault();
+    try { e.target.setPointerCapture(e.pointerId); } catch {}
 
     setIsDraggingCircle(true);
     circleMovedRef.current = false;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
     circleDragStartRef.current = {
-      x: clientX,
-      y: clientY,
+      x: e.clientX,
+      y: e.clientY,
       posX: circlePos.x,
       posY: circlePos.y,
     };
   };
 
-  useEffect(() => {
-    const handleCirclePointerMove = (e) => {
-      if (!isDraggingCircle) return;
-      if (e.cancelable) e.preventDefault(); // Keep page stable on mobile!
+  const handleCirclePointerMove = (e) => {
+    if (!isDraggingCircle) return;
+    e.preventDefault();
 
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const deltaX = e.clientX - circleDragStartRef.current.x;
+    const deltaY = e.clientY - circleDragStartRef.current.y;
 
-      const deltaX = clientX - circleDragStartRef.current.x;
-      const deltaY = clientY - circleDragStartRef.current.y;
-
-      if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
-        circleMovedRef.current = true;
-      }
-
-      const clampedX = Math.max(10, Math.min(window.innerWidth - 65, circleDragStartRef.current.posX + deltaX));
-      const clampedY = Math.max(10, Math.min(window.innerHeight - 65, circleDragStartRef.current.posY + deltaY));
-
-      setCirclePos({ x: clampedX, y: clampedY });
-    };
-
-    const handleCirclePointerUp = () => {
-      setIsDraggingCircle(false);
-    };
-
-    if (isDraggingCircle) {
-      window.addEventListener('mousemove', handleCirclePointerMove, { passive: false });
-      window.addEventListener('mouseup', handleCirclePointerUp);
-      window.addEventListener('touchmove', handleCirclePointerMove, { passive: false });
-      window.addEventListener('touchend', handleCirclePointerUp);
+    if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+      circleMovedRef.current = true;
     }
 
-    return () => {
-      window.removeEventListener('mousemove', handleCirclePointerMove);
-      window.removeEventListener('mouseup', handleCirclePointerUp);
-      window.removeEventListener('touchmove', handleCirclePointerMove);
-      window.removeEventListener('touchend', handleCirclePointerUp);
-    };
-  }, [isDraggingCircle]);
+    const clampedX = Math.max(10, Math.min(window.innerWidth - 65, circleDragStartRef.current.posX + deltaX));
+    const clampedY = Math.max(10, Math.min(window.innerHeight - 65, circleDragStartRef.current.posY + deltaY));
+
+    setCirclePos({ x: clampedX, y: clampedY });
+  };
+
+  const handleCirclePointerUp = (e) => {
+    if (isDraggingCircle) {
+      try { e.target.releasePointerCapture(e.pointerId); } catch {}
+      setIsDraggingCircle(false);
+    }
+  };
 
   // ----------------------------------------------------
-  // CHAT WINDOW HEADER DRAG HANDLERS
+  // CHAT WINDOW HEADER POINTER DRAG HANDLERS
   // ----------------------------------------------------
   const handleChatHeaderPointerDown = (e) => {
-    if (e.touches && e.touches.length > 1) return;
-    if (e.cancelable) e.preventDefault();
+    e.preventDefault();
+    try { e.target.setPointerCapture(e.pointerId); } catch {}
 
     setIsDraggingChat(true);
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
     chatDragStartRef.current = {
-      x: clientX,
-      y: clientY,
+      x: e.clientX,
+      y: e.clientY,
       posX: chatPos.x,
       posY: chatPos.y,
     };
   };
 
-  useEffect(() => {
-    const handleChatPointerMove = (e) => {
-      if (!isDraggingChat) return;
-      if (e.cancelable) e.preventDefault();
+  const handleChatPointerMove = (e) => {
+    if (!isDraggingChat) return;
+    e.preventDefault();
 
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const deltaX = e.clientX - chatDragStartRef.current.x;
+    const deltaY = e.clientY - chatDragStartRef.current.y;
 
-      const deltaX = clientX - chatDragStartRef.current.x;
-      const deltaY = clientY - chatDragStartRef.current.y;
+    const chatWidth = Math.min(window.innerWidth - 20, 410);
+    const chatHeight = isMinimized ? 65 : 520;
 
-      const chatWidth = Math.min(window.innerWidth - 20, 410);
-      const chatHeight = isMinimized ? 65 : 520;
+    const clampedX = Math.max(10, Math.min(window.innerWidth - chatWidth - 10, chatDragStartRef.current.posX + deltaX));
+    const clampedY = Math.max(10, Math.min(window.innerHeight - chatHeight - 10, chatDragStartRef.current.posY + deltaY));
 
-      const clampedX = Math.max(10, Math.min(window.innerWidth - chatWidth - 10, chatDragStartRef.current.posX + deltaX));
-      const clampedY = Math.max(10, Math.min(window.innerHeight - chatHeight - 10, chatDragStartRef.current.posY + deltaY));
+    setChatPos({ x: clampedX, y: clampedY });
+  };
 
-      setChatPos({ x: clampedX, y: clampedY });
-    };
-
-    const handleChatPointerUp = () => {
-      setIsDraggingChat(false);
-    };
-
+  const handleChatPointerUp = (e) => {
     if (isDraggingChat) {
-      window.addEventListener('mousemove', handleChatPointerMove, { passive: false });
-      window.addEventListener('mouseup', handleChatPointerUp);
-      window.addEventListener('touchmove', handleChatPointerMove, { passive: false });
-      window.addEventListener('touchend', handleChatPointerUp);
+      try { e.target.releasePointerCapture(e.pointerId); } catch {}
+      setIsDraggingChat(false);
     }
-
-    return () => {
-      window.removeEventListener('mousemove', handleChatPointerMove);
-      window.removeEventListener('mouseup', handleChatPointerUp);
-      window.removeEventListener('touchmove', handleChatPointerMove);
-      window.removeEventListener('touchend', handleChatPointerUp);
-    };
-  }, [isDraggingChat, isMinimized]);
+  };
 
   // Send Chat Message
   const handleSendMessage = async (textToSend) => {
@@ -306,25 +299,27 @@ export default function AIChatWidget() {
 
   return (
     <div className="fixed z-50 font-mono select-none">
-      {/* Draggable Floating Circle Icon (Page-Stable Touch Handling) */}
+      {/* Draggable Floating Circle Icon (HTML5 Pointer Capture & Page-Stable) */}
       <div
         style={{
           left: `${circlePos.x}px`,
           top: `${circlePos.y}px`,
-          touchAction: 'none', // Prevents mobile touch scrolling on page
+          touchAction: 'none',
         }}
-        onMouseDown={handleCirclePointerDown}
-        onTouchStart={handleCirclePointerDown}
+        onPointerDown={handleCirclePointerDown}
+        onPointerMove={handleCirclePointerMove}
+        onPointerUp={handleCirclePointerUp}
+        onPointerCancel={handleCirclePointerUp}
         onClick={handleCircleClick}
         className="fixed cursor-grab active:cursor-grabbing group transition-transform hover:scale-110 flex items-center justify-center"
       >
         <div className="relative flex h-14 w-14 items-center justify-center rounded-full border border-white/30 bg-black/90 text-white shadow-[0_0_25px_rgba(255,255,255,0.35)] backdrop-blur-md">
-          <Bot size={24} className="text-white group-hover:rotate-12 transition-transform" />
-          <span className="absolute -top-1 -right-1 flex h-4 w-4">
+          <Bot size={24} className="text-white group-hover:rotate-12 transition-transform pointer-events-none" />
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 pointer-events-none">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
             <span className="relative inline-flex rounded-full h-4 w-4 bg-white border-2 border-black"></span>
           </span>
-          <div className="absolute -bottom-1 text-[8px] font-extrabold uppercase text-white/60 flex items-center">
+          <div className="absolute -bottom-1 text-[8px] font-extrabold uppercase text-white/60 flex items-center pointer-events-none">
             <GripVertical size={10} />
           </div>
         </div>
@@ -344,11 +339,13 @@ export default function AIChatWidget() {
         >
           {/* Draggable Window Header */}
           <div
-            onMouseDown={handleChatHeaderPointerDown}
-            onTouchStart={handleChatHeaderPointerDown}
+            onPointerDown={handleChatHeaderPointerDown}
+            onPointerMove={handleChatPointerMove}
+            onPointerUp={handleChatPointerUp}
+            onPointerCancel={handleChatPointerUp}
             className="flex items-center justify-between border-b border-white/20 px-3.5 py-2.5 bg-black/90 cursor-grab active:cursor-grabbing hover:bg-white/5 transition"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 pointer-events-none">
               <GripHorizontal size={14} className="text-white/50" />
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-black font-bold">
                 <Sparkles size={14} />
@@ -364,7 +361,7 @@ export default function AIChatWidget() {
               </div>
             </div>
 
-            <div className="flex items-center gap-1" onMouseDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1" onPointerDown={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setIsMinimized((prev) => !prev)}
                 className="rounded-lg p-1.5 text-white/60 hover:bg-white/10 hover:text-white transition"
@@ -434,7 +431,6 @@ export default function AIChatWidget() {
                     </div>
                   </div>
                 )}
-                <div ref={chatEndRef} />
               </div>
 
               {/* Quick Prompts */}
