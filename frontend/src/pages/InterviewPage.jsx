@@ -1,15 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
+  Award,
   BrainCircuit,
   CheckCircle2,
   Clock3,
   FileCheck2,
+  Mic,
+  MicOff,
   Send,
+  Share2,
   SkipForward,
   Sparkles,
+  Volume2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api, { getApiErrorMessage } from '../services/api';
@@ -29,6 +34,11 @@ export default function InterviewPage() {
   const [feedback, setFeedback] = useState(null);
   const [timer, setTimer] = useState(0);
   const [phase, setPhase] = useState('question');
+
+  // Voice AI States
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
     fetchNextQuestion();
@@ -66,9 +76,78 @@ export default function InterviewPage() {
     }
   };
 
+  // Web Speech Recognition (Voice Input)
+  const toggleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error('Speech recognition is not supported in this browser');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      toast.success('Voice input stopped');
+      return;
+    }
+
+    const rec = new SpeechRecognition();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = 'en-US';
+
+    rec.onresult = (e) => {
+      let transcript = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        transcript += e.results[i][0].transcript;
+      }
+      setAnswer((prev) => (prev ? `${prev} ${transcript}` : transcript));
+    };
+
+    rec.onerror = (err) => {
+      console.warn('Speech recognition error:', err);
+      setIsListening(false);
+    };
+
+    rec.onend = () => setIsListening(false);
+
+    rec.start();
+    recognitionRef.current = rec;
+    setIsListening(true);
+    toast.success('🎙️ Microphone active! Speak your answer out loud.');
+  };
+
+  // Text-to-Speech Question Reader
+  const speakQuestionAloud = () => {
+    if (!window.speechSynthesis) {
+      toast.error('Voice audio synthesis is not supported in this browser');
+      return;
+    }
+
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const qText = typeof currentQuestion === 'string' ? currentQuestion : (currentQuestion?.question || '');
+    const uttr = new SpeechSynthesisUtterance(qText);
+    uttr.rate = 1.0;
+    uttr.pitch = 1.0;
+    uttr.onend = () => setIsSpeaking(false);
+    uttr.onerror = () => setIsSpeaking(false);
+
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(uttr);
+  };
+
   const handleSubmitAnswer = async () => {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (recognitionRef.current) recognitionRef.current.stop();
+    setIsListening(false);
+
     if (!answer.trim()) {
-      toast.error('Please type your response before submitting');
+      toast.error('Please type or speak your response before submitting');
       return;
     }
 
@@ -90,6 +169,10 @@ export default function InterviewPage() {
   };
 
   const handleSkipQuestion = async () => {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (recognitionRef.current) recognitionRef.current.stop();
+    setIsListening(false);
+
     try {
       await api.post(`/interviews/${id}/skip-question`, {
         questionId: currentQuestion?.id || currentQuestion?._id || currentIndex,
@@ -165,7 +248,7 @@ export default function InterviewPage() {
         <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
           {phase === 'question' && (
             <div className="space-y-6 reveal-up">
-              <AIWaveform active={submitting} label="AI INTERVIEWER ACTIVE" />
+              <AIWaveform active={submitting || isSpeaking} label={isSpeaking ? 'AI SPEAKING QUESTION...' : 'AI INTERVIEWER ACTIVE'} />
 
               {/* Question Card */}
               <div className="calm-card rounded-2xl p-6 sm:p-8 font-sans">
@@ -173,9 +256,19 @@ export default function InterviewPage() {
                   <span className="rounded-md border border-inherit bg-current/10 px-2.5 py-0.5 text-[11px] font-bold uppercase">
                     {qCategory}
                   </span>
-                  <span className="text-[11px] opacity-60 font-bold">
-                    Question #{currentIndex + 1}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={speakQuestionAloud}
+                      className="rounded-lg border border-inherit bg-current/10 px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 hover:bg-current/20 transition"
+                      title="Read Question Aloud"
+                    >
+                      <Volume2 size={13} className={isSpeaking ? 'animate-bounce' : ''} />
+                      {isSpeaking ? 'Stop Audio' : '🔊 Listen'}
+                    </button>
+                    <span className="text-[11px] opacity-60 font-bold">
+                      #{currentIndex + 1}
+                    </span>
+                  </div>
                 </div>
                 <h1 className="text-xl sm:text-2xl font-bold leading-snug text-glow-white">
                   {qText}
@@ -189,14 +282,27 @@ export default function InterviewPage() {
 
               {/* Answer Box */}
               <div className="calm-card rounded-2xl p-6">
-                <label className="block mb-2 text-xs font-bold uppercase font-mono">
-                  Your Response
-                </label>
+                <div className="flex items-center justify-between mb-2 font-mono">
+                  <label className="text-xs font-bold uppercase">
+                    Your Response
+                  </label>
+                  <button
+                    onClick={toggleVoiceInput}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition border ${
+                      isListening
+                        ? 'bg-red-500 text-white border-red-400 animate-pulse'
+                        : 'border-inherit bg-current/10 hover:bg-current/20'
+                    }`}
+                  >
+                    {isListening ? <MicOff size={13} /> : <Mic size={13} />}
+                    <span>{isListening ? '🎙️ Listening... (Stop)' : '🎙️ Speak Answer'}</span>
+                  </button>
+                </div>
                 <textarea
                   rows={6}
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Type your response here... (Structure your answer clearly with key technical details)"
+                  placeholder="Type or speak your response out loud... (Structure your answer clearly with key technical details)"
                   className="calm-input text-sm leading-relaxed"
                 />
                 <div className="mt-4 flex items-center justify-between text-xs font-mono opacity-80">
@@ -299,9 +405,19 @@ export default function InterviewPage() {
               <p className="text-sm opacity-80 max-w-md mx-auto mb-6 font-sans">
                 Your performance analytics have been saved to your dashboard.
               </p>
-              <button onClick={() => navigate('/dashboard')} className="calm-button px-8 py-3 text-xs font-extrabold uppercase">
-                Back to Dashboard
-              </button>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 font-mono">
+                <button
+                  onClick={() => navigate(`/verify/${id}`)}
+                  className="calm-button px-6 py-2.5 text-xs font-extrabold uppercase flex items-center gap-1.5"
+                >
+                  <Award size={15} />
+                  View Verified Certificate
+                </button>
+                <button onClick={() => navigate('/dashboard')} className="calm-button-outline px-6 py-2.5 text-xs font-bold uppercase">
+                  Back to Dashboard
+                </button>
+              </div>
             </div>
           )}
         </main>

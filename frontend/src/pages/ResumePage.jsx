@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   CheckCircle2,
   Copy,
+  Download,
   Sparkles,
   UploadCloud,
   Wand2,
@@ -75,8 +76,44 @@ export default function ResumePage() {
   const handleCopyOptimized = () => {
     if (optimizedData?.optimizedResume) {
       navigator.clipboard.writeText(optimizedData.optimizedResume);
-      toast.success('Optimized resume copied to clipboard!');
+      toast.success('Optimized resume text copied to clipboard!');
     }
+  };
+
+  const handleDownloadPdf = () => {
+    if (!optimizedData?.optimizedResume) return;
+
+    const printWin = window.open('', '_blank', 'width=800,height=900');
+    const content = optimizedData.optimizedResume
+      .replace(/^# (.*$)/gim, '<h1 style="font-size:20px;margin-bottom:4px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:4px;">$1</h1>')
+      .replace(/^## (.*$)/gim, '<h2 style="font-size:13px;margin-top:10px;margin-bottom:3px;text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:2px;">$1</h2>')
+      .replace(/^### (.*$)/gim, '<h3 style="font-size:11.5px;margin-top:6px;margin-bottom:2px;">$1</h3>')
+      .replace(/^\- (.*$)/gim, '<li style="margin-bottom:2.5px;">$1</li>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Lovjyot_Singh_ATS_Resume</title>
+          <style>
+            body { font-family: 'Arial', sans-serif; font-size: 10.5pt; line-height: 1.35; color: #111; padding: 20px; }
+            ul { margin-top: 2px; margin-bottom: 5px; padding-left: 16px; }
+            h1, h2, h3 { color: #000; }
+            @page { margin: 0.35in; size: A4; }
+          </style>
+        </head>
+        <body>
+          <div>${content}</div>
+          <script>
+            window.onload = function() { window.print(); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWin.document.close();
+    toast.success('Opening print dialog for PDF export!');
   };
 
   const innerAnalysis = resultData?.analysis || {};
@@ -204,20 +241,29 @@ export default function ResumePage() {
             {/* Generated Optimized Resume View */}
             {optimizedData && (
               <div className="calm-card rounded-2xl p-6 sm:p-8 reveal-up font-mono">
-                <div className="flex items-center justify-between border-b border-inherit pb-4 mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-inherit pb-4 mb-6">
                   <div>
                     <span className="text-[11px] opacity-80 font-bold uppercase tracking-wider">PROJECTED ATS SCORE</span>
                     <div className="text-3xl font-black text-glow-white mt-0.5">
                       {optimizedData.projectedAtsScore || 96}% ATS MATCH
                     </div>
                   </div>
-                  <button
-                    onClick={handleCopyOptimized}
-                    className="calm-button-outline px-4 py-2 text-xs font-bold uppercase flex items-center gap-1.5"
-                  >
-                    <Copy size={14} />
-                    Copy Resume Text
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCopyOptimized}
+                      className="calm-button-outline px-3.5 py-2 text-xs font-bold uppercase flex items-center gap-1.5"
+                    >
+                      <Copy size={14} />
+                      Copy Text
+                    </button>
+                    <button
+                      onClick={handleDownloadPdf}
+                      className="calm-button px-4 py-2 text-xs font-extrabold uppercase flex items-center gap-1.5 shadow-md"
+                    >
+                      <Download size={14} />
+                      📥 Download PDF
+                    </button>
+                  </div>
                 </div>
 
                 {optimizedData.summary && (

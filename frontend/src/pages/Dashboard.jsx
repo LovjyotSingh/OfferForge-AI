@@ -14,6 +14,7 @@ import { Line, LineChart, PolarAngleAxis, PolarGrid, Radar, RadarChart, Responsi
 import toast from 'react-hot-toast';
 import Layout from '../components/Layout';
 import CompanyTargetSelector from '../components/CompanyTargetSelector';
+import PracticeHeatmap from '../components/PracticeHeatmap';
 import api, { getApiErrorMessage } from '../services/api';
 import { getUser } from '../services/auth';
 
@@ -177,6 +178,11 @@ export default function Dashboard() {
               <Activity size={14} className="animate-pulse" />
             </div>
           </div>
+        </section>
+
+        {/* Daily Practice Heatmap */}
+        <section className="mt-6">
+          <PracticeHeatmap totalSessions={stats?.overview?.totalInterviews || 0} />
         </section>
 
         {/* Company Target Matrix Selector */}

@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Cpu, FileText, LayoutDashboard, LogOut, Sparkles, User, ShieldCheck } from 'lucide-react';
+import { Cpu, FileText, LayoutDashboard, LogOut, Sparkles, User, ShieldCheck, Server } from 'lucide-react';
 import { clearAuth, getToken, getUser } from '../services/auth';
 import CyberBackground from './CyberBackground';
 import AIChatWidget from './AIChatWidget';
@@ -85,6 +85,17 @@ export default function Layout({ children, showNav = true }) {
                     >
                       <FileText size={15} />
                       ATS Scanner
+                    </Link>
+                    <Link
+                      to="/system-design"
+                      className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
+                        isActive('/system-design')
+                          ? 'calm-button shadow-md'
+                          : 'calm-button-outline'
+                      }`}
+                    >
+                      <Server size={15} />
+                      System Design
                     </Link>
 
                     <div className="h-4 w-px bg-current opacity-20 mx-1"></div>

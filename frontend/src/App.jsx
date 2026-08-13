@@ -10,6 +10,8 @@ const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const InterviewPage = lazy(() => import('./pages/InterviewPage'));
 const ResumePage = lazy(() => import('./pages/ResumePage'));
+const SystemDesignPage = lazy(() => import('./pages/SystemDesignPage'));
+const VerifyCertificatePage = lazy(() => import('./pages/VerifyCertificatePage'));
 
 const savedTheme = localStorage.getItem('offerforge_theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
@@ -39,7 +41,6 @@ function AppLoader() {
   );
 }
 
-
 export default function App() {
   return (
     <BrowserRouter>
@@ -52,6 +53,8 @@ export default function App() {
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/interview/:id" element={<PrivateRoute><InterviewPage /></PrivateRoute>} />
           <Route path="/resume" element={<PrivateRoute><ResumePage /></PrivateRoute>} />
+          <Route path="/system-design" element={<PrivateRoute><SystemDesignPage /></PrivateRoute>} />
+          <Route path="/verify/:id" element={<VerifyCertificatePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
