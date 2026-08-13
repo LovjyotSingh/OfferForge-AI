@@ -167,15 +167,15 @@ class Solution {
 
 ---
 
-### 📝 Line-by-Line Breakdown
-- Line 6-10: Build adjacency list \`adj\` and compute in-degree array \`inDegree\`.
-- Line 12-14: Enqueue courses with 0 prerequisites (\`inDegree == 0\`).
-- Line 17-23: Poll course, store in result array \`res\`, decrement neighbor in-degrees.
-- Line 25: Return \`res\` if topological sort succeeded, else return empty array.
+### 📝 Line-by-Line Code Breakdown
+- **Line 6-10**: Build adjacency list \`adj\` and compute in-degree array \`inDegree\`.
+- **Line 12-14**: Enqueue courses with 0 prerequisites (\`inDegree == 0\`).
+- **Line 17-23**: Poll course, store in result array \`res\`, decrement neighbor in-degrees.
+- **Line 25**: Return \`res\` if topological sort succeeded, else return empty array.
 
 ---
-- Time Complexity: O(V + E)
-- Space Complexity: O(V + E)`,
+- **Time Complexity**: O(V + E)
+- **Space Complexity**: O(V + E)`,
 
       javascript: `### 🧠 Core Concept Explanation (${title})
 Kahn's Algorithm for Topological Sort in JavaScript.
@@ -209,8 +209,16 @@ function findOrder(numCourses, prerequisites) {
 \`\`\`
 
 ---
-- Time Complexity: O(V + E)
-- Space Complexity: O(V + E)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2-3**: Construct adjacency list \`adj\` and array \`inDegree\`.
+- **Line 4-7**: Track directed edges and increment destination node in-degrees.
+- **Line 8-11**: Enqueue courses with 0 prerequisites.
+- **Line 13-20**: Perform BFS traversal polling queue elements and decrementing in-degrees.
+
+---
+- **Time Complexity**: O(V + E)
+- **Space Complexity**: O(V + E)`,
 
       python: `### 🧠 Core Concept Explanation (${title})
 Python Topological Sort using Queue.
@@ -240,8 +248,15 @@ def findOrder(numCourses: int, prerequisites: list[list[int]]) -> list[int]:
 \`\`\`
 
 ---
-- Time Complexity: O(V + E)
-- Space Complexity: O(V + E)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 4-8**: Build adjacency graph \`adj\` and array \`in_degree\`.
+- **Line 9**: Initialize \`deque\` with zero in-degree nodes.
+- **Line 11-17**: Pop node from left, record in \`res\`, and update neighbor degrees.
+
+---
+- **Time Complexity**: O(V + E)
+- **Space Complexity**: O(V + E)`,
 
       cpp: `### 🧠 Core Concept Explanation (${title})
 C++ Topological Sort.
@@ -277,8 +292,15 @@ std::vector<int> findOrder(int numCourses, std::vector<std::vector<int>>& prereq
 \`\`\`
 
 ---
-- Time Complexity: O(V + E)
-- Space Complexity: O(V + E)`
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 5-10**: Construct adjacency vector \`adj\` and in-degree vector.
+- **Line 11-14**: Enqueue nodes with 0 dependencies.
+- **Line 16-21**: BFS loop building topological result vector \`res\`.
+
+---
+- **Time Complexity**: O(V + E)
+- **Space Complexity**: O(V + E)`
     };
   }
 
@@ -308,8 +330,15 @@ class Solution {
 \`\`\`
 
 ---
-- Time Complexity: O(H)
-- Space Complexity: O(1)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2-3**: Traverse tree starting at \`root\`.
+- **Line 4-7**: Navigate left or right depending on whether both values are smaller or larger than \`root.val\`.
+- **Line 8-9**: Return node where path splits.
+
+---
+- **Time Complexity**: O(H)
+- **Space Complexity**: O(1)`,
 
       javascript: `### 🧠 Core Concept Explanation (${title})
 Iterative BST LCA traversal in JavaScript.
@@ -333,8 +362,15 @@ function lowestCommonAncestor(root, p, q) {
 \`\`\`
 
 ---
-- Time Complexity: O(H)
-- Space Complexity: O(1)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2-3**: Loop while \`root\` is valid.
+- **Line 4-7**: Step left or right in BST based on target node values.
+- **Line 8**: Return LCA split node.
+
+---
+- **Time Complexity**: O(H)
+- **Space Complexity**: O(1)`,
 
       python: `### 🧠 Core Concept Explanation (${title})
 Iterative BST LCA in Python.
@@ -355,8 +391,15 @@ def lowestCommonAncestor(root: TreeNode, p: TreeNode, q: TreeNode) -> TreeNode:
 \`\`\`
 
 ---
-- Time Complexity: O(H)
-- Space Complexity: O(1)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2**: Traverse BST starting at \`root\`.
+- **Line 3-6**: Traverse left/right according to value constraints.
+- **Line 7-8**: Return LCA node.
+
+---
+- **Time Complexity**: O(H)
+- **Space Complexity**: O(1)`,
 
       cpp: `### 🧠 Core Concept Explanation (${title})
 Iterative BST LCA in C++.
@@ -376,8 +419,13 @@ TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
 \`\`\`
 
 ---
-- Time Complexity: O(H)
-- Space Complexity: O(1)`
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2-5**: Iterate pointers over BST returning split ancestor node.
+
+---
+- **Time Complexity**: O(H)
+- **Space Complexity**: O(1)`
     };
   }
 
@@ -402,8 +450,15 @@ class Solution {
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(H)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 3**: Base case: return 0 if \`root == null\`.
+- **Line 4-5**: Recursively evaluate left and right subtrees.
+- **Line 6**: Aggregate subproblem height metrics.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(H)`,
 
       javascript: `### 🧠 Core Concept Explanation (${title})
 Tree DFS traversal in JavaScript.
@@ -419,8 +474,14 @@ function ${fn}(root) {
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(H)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2**: Base case for null root.
+- **Line 3**: Recursive step aggregating left and right subtrees.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(H)`,
 
       python: `### 🧠 Core Concept Explanation (${title})
 Tree DFS traversal in Python.
@@ -435,8 +496,14 @@ def ${fn}(root) -> int:
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(H)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2**: Check null root.
+- **Line 3**: Compute recursive depth.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(H)`,
 
       cpp: `### 🧠 Core Concept Explanation (${title})
 Tree DFS traversal in C++.
@@ -452,8 +519,13 @@ int ${fn}(TreeNode* root) {
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(H)`
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2-3**: Base case check and recursive depth calculation.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(H)`
     };
   }
 
@@ -493,8 +565,15 @@ class Solution {
 \`\`\`
 
 ---
-- Time Complexity: O(V + E)
-- Space Complexity: O(V)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 3-4**: Validate non-empty grid.
+- **Line 5-11**: Double loop over grid cells. Trigger DFS when unvisited land cell \`'1'\` is found.
+- **Line 16-22**: Mark cell as visited (\`'0'\`) and recurse in all 4 cardinal directions.
+
+---
+- **Time Complexity**: O(V + E)
+- **Space Complexity**: O(V)`,
 
       javascript: `### 🧠 Core Concept Explanation (${title})
 Graph Grid DFS in JavaScript.
@@ -521,8 +600,15 @@ function ${fn}(grid) {
 \`\`\`
 
 ---
-- Time Complexity: O(V + E)
-- Space Complexity: O(V)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2**: Base case empty grid.
+- **Line 4-7**: Helper function \`dfs(r, c)\` marking cell \`'0'\` and traversing neighbors.
+- **Line 8-12**: Main grid loop counting connected components.
+
+---
+- **Time Complexity**: O(V + E)
+- **Space Complexity**: O(V)`,
 
       python: `### 🧠 Core Concept Explanation (${title})
 Graph Grid DFS in Python.
@@ -548,8 +634,15 @@ def ${fn}(grid: list[list[str]]) -> int:
 \`\`\`
 
 ---
-- Time Complexity: O(V + E)
-- Space Complexity: O(V)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2-3**: Store grid dimensions.
+- **Line 5-8**: Recursive \`dfs\` clearing visited cells.
+- **Line 9-13**: Loop grid cells and increment component count.
+
+---
+- **Time Complexity**: O(V + E)
+- **Space Complexity**: O(V)`,
 
       cpp: `### 🧠 Core Concept Explanation (${title})
 Graph Grid DFS in C++.
@@ -579,8 +672,14 @@ int ${fn}(std::vector<std::vector<char>>& grid) {
 \`\`\`
 
 ---
-- Time Complexity: O(V + E)
-- Space Complexity: O(V)`
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 3-7**: \`dfs\` helper exploring 4 directions.
+- **Line 9-16**: Outer grid loop counting connected islands.
+
+---
+- **Time Complexity**: O(V + E)
+- **Space Complexity**: O(V)`
     };
   }
 
@@ -608,8 +707,17 @@ class Solution {
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(N)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 3**: Handle edge case empty array.
+- **Line 5**: Initialize DP array \`dp\` of size \`n\`.
+- **Line 6**: Base case \`dp[0] = nums[0]\`.
+- **Line 7-9**: Transition state computing running maximum subarray sum.
+- **Line 10**: Return optimal DP state.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(N)`,
 
       javascript: `### 🧠 Core Concept Explanation (${title})
 1D Dynamic Programming in JavaScript.
@@ -630,8 +738,15 @@ function ${fn}(nums) {
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(N)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2**: Array length check.
+- **Line 3-4**: Create \`dp\` array and set base case \`dp[0]\`.
+- **Line 5-7**: Fill DP state array.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(N)`,
 
       python: `### 🧠 Core Concept Explanation (${title})
 1D Dynamic Programming in Python.
@@ -650,8 +765,15 @@ def ${fn}(nums: list[int]) -> int:
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(N)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2**: Empty array check.
+- **Line 3-4**: Initialize DP list and set base state \`dp[0]\`.
+- **Line 5-6**: Loop updating DP state.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(N)`,
 
       cpp: `### 🧠 Core Concept Explanation (${title})
 1D Dynamic Programming in C++.
@@ -675,12 +797,19 @@ int ${fn}(std::vector<int>& nums) {
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(N)`
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 5**: Edge case empty vector check.
+- **Line 6-7**: Initialize DP vector and base state.
+- **Line 8-10**: Transition state loop.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(N)`
     };
   }
 
-  // General Topic Solution
+  // General Topic Solution with Line-by-Line Breakdown
   return {
     java: `### 🧠 Core Concept Explanation (${title})
 We solve **${title}** using **${topic}** principles in Java.
@@ -703,8 +832,16 @@ class Solution {
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(1)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 3**: Initialize \`maxVal = nums[0]\` to record peak metric.
+- **Line 4**: Initialize \`curr = 0\` as running subproblem tracker.
+- **Line 5-8**: Single pass loop updating running optimal values.
+- **Line 9**: Return final optimal calculated metric.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(1)`,
 
     javascript: `### 🧠 Core Concept Explanation (${title})
 We solve **${title}** using **${topic}** in JavaScript.
@@ -725,8 +862,16 @@ function ${fn}(nums) {
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(1)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2**: Initialize \`maxVal = nums[0]\`.
+- **Line 3**: Track running subproblem in \`curr\`.
+- **Line 4-7**: Perform linear state update.
+- **Line 8**: Return \`maxVal\`.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(1)`,
 
     python: `### 🧠 Core Concept Explanation (${title})
 Optimal ${topic} in Python.
@@ -745,8 +890,16 @@ def ${fn}(nums: list[int]) -> int:
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(1)`,
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 2**: Store first element in \`max_val\`.
+- **Line 3**: Accumulator variable \`curr = 0\`.
+- **Line 4-6**: Loop and update state.
+- **Line 7**: Return \`max_val\`.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(1)`,
 
     cpp: `### 🧠 Core Concept Explanation (${title})
 Optimal ${topic} in C++.
@@ -770,8 +923,16 @@ int ${fn}(std::vector<int>& nums) {
 \`\`\`
 
 ---
-- Time Complexity: O(N)
-- Space Complexity: O(1)`
+
+### 📝 Line-by-Line Code Breakdown
+- **Line 5**: Initialize \`maxVal = nums[0]\`.
+- **Line 6**: Accumulator variable \`curr = 0\`.
+- **Line 7-10**: Iterative pass updating running state.
+- **Line 11**: Return \`maxVal\`.
+
+---
+- **Time Complexity**: O(N)
+- **Space Complexity**: O(1)`
   };
 }
 
