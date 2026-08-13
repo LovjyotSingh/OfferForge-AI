@@ -1,217 +1,51 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Code2, Play, Sparkles, Cpu, CheckCircle2, Terminal, Lightbulb, Check, SkipForward, ArrowRight } from 'lucide-react';
+import { Code2, Play, Sparkles, Cpu, CheckCircle2, Terminal, Lightbulb, Check, SkipForward, ArrowRight, Search, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Layout from '../components/Layout';
 import api from '../services/api';
+import { get100DSAQuestions } from '../data/dsaQuestions';
 
-const SAMPLE_PROBLEMS = [
-  {
-    id: 'two-sum',
-    title: '1. Two Sum (Hash Map)',
-    difficulty: 'Easy',
-    description: 'Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to target.',
-    testCases: [
-      { input: 'nums = [2, 7, 11, 15], target = 9', expected: '[0, 1]' },
-      { input: 'nums = [3, 2, 4], target = 6', expected: '[1, 2]' },
-      { input: 'nums = [3, 3], target = 6', expected: '[0, 1]' },
-    ],
-    defaultCode: {
-      javascript: `function twoSum(nums, target) {
-  const map = new Map();
-  for (let i = 0; i < nums.length; i++) {
-    const diff = target - nums[i];
-    if (map.has(diff)) {
-      return [map.get(diff), i];
-    }
-    map.set(nums[i], i);
-  }
-  return [];
-}`,
-      python: `def twoSum(nums, target):
-    seen = {}
-    for i, num in enumerate(nums):
-        diff = target - num
-        if diff in seen:
-            return [seen[diff], i]
-        seen[num] = i
-    return []`,
-      java: `import java.util.HashMap;
-import java.util.Map;
+const ALL_QUESTIONS = get100DSAQuestions();
 
-class Solution {
-    public int[] twoSum(int[] nums, int target) {
-        Map<Integer, Integer> map = new HashMap<>();
-        for (int i = 0; i < nums.length; i++) {
-            int diff = target - nums[i];
-            if (map.containsKey(diff)) {
-                return new int[] { map.get(diff), i };
-            }
-            map.put(nums[i], i);
-        }
-        return new int[0];
-    }
-}`,
-      cpp: `#include <vector>
-#include <unordered_map>
-
-std::vector<int> twoSum(std::vector<int>& nums, int target) {
-    std::unordered_map<int, int> seen;
-    for (int i = 0; i < nums.size(); ++i) {
-        int diff = target - nums[i];
-        if (seen.count(diff)) {
-            return {seen[diff], i};
-        }
-        seen[nums[i]] = i;
-    }
-    return {};
-}`
-    }
-  },
-  {
-    id: 'valid-parentheses',
-    title: '20. Valid Parentheses (Stack)',
-    difficulty: 'Easy',
-    description: 'Given a string `s` containing `(`, `)`, `{`, `}`, `[` and `]`, determine if the input string is valid.',
-    testCases: [
-      { input: 's = "()[]{}"', expected: 'true' },
-      { input: 's = "(]"', expected: 'false' },
-      { input: 's = "([{}])"', expected: 'true' },
-    ],
-    defaultCode: {
-      javascript: `function isValid(s) {
-  const stack = [];
-  const map = { ')': '(', '}': '{', ']': '[' };
-  for (let char of s) {
-    if (char === '(' || char === '{' || char === '[') {
-      stack.push(char);
-    } else {
-      if (stack.pop() !== map[char]) return false;
-    }
-  }
-  return stack.length === 0;
-}`,
-      python: `def isValid(s: str) -> bool:
-    stack = []
-    mapping = {")": "(", "}": "{", "]": "["}
-    for char in s:
-        if char in mapping:
-            top = stack.pop() if stack else '#'
-            if mapping[char] != top:
-                return False
-        else:
-            stack.append(char)
-    return not stack`,
-      java: `import java.util.Stack;
-
-class Solution {
-    public boolean isValid(String s) {
-        Stack<Character> stack = new Stack<>();
-        for (char c : s.toCharArray()) {
-            if (c == '(' || c == '{' || c == '[') {
-                stack.push(c);
-            } else {
-                if (stack.isEmpty()) return false;
-                char top = stack.pop();
-                if (c == ')' && top != '(') return false;
-                if (c == '}' && top != '{') return false;
-                if (c == ']' && top != '[') return false;
-            }
-        }
-        return stack.isEmpty();
-    }
-}`,
-      cpp: `#include <stack>
-#include <string>
-
-bool isValid(std::string s) {
-    std::stack<char> st;
-    for (char c : s) {
-        if (c == '(' || c == '{' || c == '[') st.push(c);
-        else {
-            if (st.empty()) return false;
-            if (c == ')' && st.top() != '(') return false;
-            if (c == '}' && st.top() != '{') return false;
-            if (c == ']' && st.top() != '[') return false;
-            st.pop();
-        }
-    }
-    return st.empty();
-}`
-    }
-  },
-  {
-    id: 'best-time-stock',
-    title: '121. Best Time to Buy & Sell Stock',
-    difficulty: 'Easy',
-    description: 'You are given an array `prices` where `prices[i]` is the price of a given stock on the `i-th` day. Return the maximum profit you can achieve.',
-    testCases: [
-      { input: 'prices = [7,1,5,3,6,4]', expected: '5' },
-      { input: 'prices = [7,6,4,3,1]', expected: '0' },
-    ],
-    defaultCode: {
-      javascript: `function maxProfit(prices) {
-  let minPrice = Infinity;
-  let maxProfit = 0;
-  for (let price of prices) {
-    if (price < minPrice) minPrice = price;
-    else if (price - minPrice > maxProfit) maxProfit = price - minPrice;
-  }
-  return maxProfit;
-}`,
-      python: `def maxProfit(prices: list[int]) -> int:
-    min_price = float('inf')
-    max_profit = 0
-    for price in prices:
-        if price < min_price:
-            min_price = price
-        elif price - min_price > max_profit:
-            max_profit = price - min_price
-    return max_profit`,
-      java: `class Solution {
-    public int maxProfit(int[] prices) {
-        int minPrice = Integer.MAX_VALUE;
-        int maxProfit = 0;
-        for (int price : prices) {
-            if (price < minPrice) {
-                minPrice = price;
-            } else if (price - minPrice > maxProfit) {
-                maxProfit = price - minPrice;
-            }
-        }
-        return maxProfit;
-    }
-}`,
-      cpp: `#include <vector>
-#include <algorithm>
-
-int maxProfit(std::vector<int>& prices) {
-    int minPrice = INT_MAX;
-    int maxProfit = 0;
-    for (int price : prices) {
-        if (price < minPrice) minPrice = price;
-        else if (price - minPrice > maxProfit) maxProfit = price - minPrice;
-    }
-    return maxProfit;
-}`
-    }
-  }
+const TOPICS = [
+  'All',
+  'Arrays & Hashing',
+  'Two Pointers',
+  'Sliding Window',
+  'Stack',
+  'Binary Search',
+  'Linked List',
+  'Trees',
+  'Graphs',
+  'Dynamic Programming',
 ];
 
 export default function CodeSandboxPage() {
   const navigate = useNavigate();
-  const [selectedProblem, setSelectedProblem] = useState(SAMPLE_PROBLEMS[0]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTopic, setSelectedTopic] = useState('All');
+  const [selectedProblem, setSelectedProblem] = useState(ALL_QUESTIONS[0]);
   const [language, setLanguage] = useState('javascript');
-  const [code, setCode] = useState(SAMPLE_PROBLEMS[0].defaultCode.javascript);
+  const [code, setCode] = useState(ALL_QUESTIONS[0].initialCode.javascript);
   const [evaluating, setEvaluating] = useState(false);
   const [explaining, setExplaining] = useState(false);
   const [evaluationResult, setEvaluationResult] = useState(null);
   const [testResults, setTestResults] = useState(null);
   const [solutionExplanation, setSolutionExplanation] = useState(null);
 
+  // Filter 100 questions by search query and topic
+  const filteredQuestions = ALL_QUESTIONS.filter((q) => {
+    const matchesSearch = q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          q.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          String(q.number).includes(searchQuery);
+    const matchesTopic = selectedTopic === 'All' || q.topic === selectedTopic;
+    return matchesSearch && matchesTopic;
+  });
+
   const handleSelectProblem = (prob) => {
     setSelectedProblem(prob);
-    setCode(prob.defaultCode[language] || prob.defaultCode.javascript);
+    setCode(prob.initialCode[language] || prob.initialCode.javascript);
     setEvaluationResult(null);
     setTestResults(null);
     setSolutionExplanation(null);
@@ -219,17 +53,17 @@ export default function CodeSandboxPage() {
 
   const handleLanguageChange = (lang) => {
     setLanguage(lang);
-    setCode(selectedProblem.defaultCode[lang] || selectedProblem.defaultCode.javascript);
+    setCode(selectedProblem.initialCode[lang] || selectedProblem.initialCode.javascript);
     setEvaluationResult(null);
     setTestResults(null);
     setSolutionExplanation(null);
   };
 
   const handleNextQuestion = () => {
-    const currentIndex = SAMPLE_PROBLEMS.findIndex((p) => p.id === selectedProblem.id);
-    const nextIndex = (currentIndex + 1) % SAMPLE_PROBLEMS.length;
-    handleSelectProblem(SAMPLE_PROBLEMS[nextIndex]);
-    toast.success(`Loaded Next Problem: ${SAMPLE_PROBLEMS[nextIndex].title}`);
+    const currentIndex = ALL_QUESTIONS.findIndex((p) => p.id === selectedProblem.id);
+    const nextIndex = (currentIndex + 1) % ALL_QUESTIONS.length;
+    handleSelectProblem(ALL_QUESTIONS[nextIndex]);
+    toast.success(`Loaded Problem #${nextIndex + 1}: ${ALL_QUESTIONS[nextIndex].title}`);
   };
 
   const handleSkipQuestion = () => {
@@ -247,7 +81,7 @@ export default function CodeSandboxPage() {
 
     // Simulate real test case execution output console
     setTimeout(() => {
-      const results = selectedProblem.testCases.map((tc, idx) => ({
+      const results = (selectedProblem.testCases || []).map((tc, idx) => ({
         id: idx + 1,
         input: tc.input,
         expected: tc.expected,
@@ -307,38 +141,69 @@ export default function CodeSandboxPage() {
         <div className="reveal-up mb-8 text-center max-w-3xl mx-auto">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-inherit bg-current/10 px-3.5 py-1 text-xs font-bold font-mono">
             <Sparkles size={14} className="animate-pulse" />
-            REAL-TIME CODE EVALUATOR & COMPILER STUDIO
+            100 CURATED DSA QUESTIONS BANK & COMPILER STUDIO
           </div>
           <h1 className="text-3xl font-black text-glow-white sm:text-4xl">
-            Live Code Sandbox & Output Console
+            100 DSA Problems & Live Compiler Sandbox
           </h1>
           <p className="mt-2 text-xs opacity-70 font-mono">
-            Write code in **JavaScript, Python, Java, or C++**, view test case outputs, and get line-by-line solution explanations!
+            Solve 100 numbered DSA interview questions in **Java ☕, Python, JavaScript, or C++**. Clean code initialization per question!
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
-          {/* Problem Selector Sidebar */}
+        <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
+          {/* Problem Selector Sidebar with Search & Filters */}
           <div className="space-y-3 font-mono">
-            <div className="text-xs font-bold uppercase opacity-70 px-1">DSA Interview Problems</div>
-            {SAMPLE_PROBLEMS.map((prob) => {
-              const isSelected = selectedProblem.id === prob.id;
-              return (
-                <div
-                  key={prob.id}
-                  onClick={() => handleSelectProblem(prob)}
-                  className={`calm-card rounded-2xl p-4 cursor-pointer transition ${
-                    isSelected ? 'border-2 border-inherit shadow-lg' : 'hover:bg-current/5 opacity-85'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[11px] font-bold opacity-80 mb-1">
-                    <span>{prob.difficulty}</span>
+            <div className="flex items-center justify-between text-xs font-bold uppercase opacity-80 px-1">
+              <span>DSA Question Bank ({filteredQuestions.length}/100)</span>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search 100 DSA problems (e.g. 15, Two Sum)..."
+                className="calm-input text-xs pl-8 font-sans"
+              />
+              <Search size={14} className="absolute left-2.5 top-2.5 opacity-60" />
+            </div>
+
+            {/* Topic Filter Selector */}
+            <select
+              value={selectedTopic}
+              onChange={(e) => setSelectedTopic(e.target.value)}
+              className="calm-input text-xs font-bold"
+            >
+              {TOPICS.map((t) => (
+                <option key={t} value={t} className="bg-slate-900 text-white">
+                  Topic: {t}
+                </option>
+              ))}
+            </select>
+
+            {/* 100 Questions Scrollable List */}
+            <div className="max-h-[600px] overflow-y-auto space-y-2 pr-1 scrollbar-none">
+              {filteredQuestions.map((prob) => {
+                const isSelected = selectedProblem.id === prob.id;
+                return (
+                  <div
+                    key={prob.id}
+                    onClick={() => handleSelectProblem(prob)}
+                    className={`calm-card rounded-xl p-3 cursor-pointer transition ${
+                      isSelected ? 'border-2 border-inherit shadow-md bg-current/10' : 'hover:bg-current/5 opacity-85'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-[10px] font-bold opacity-80 mb-0.5">
+                      <span className="rounded bg-current/10 px-1.5 py-0.5">{prob.difficulty}</span>
+                      <span className="opacity-60">{prob.topic}</span>
+                    </div>
+                    <h3 className="text-xs font-bold text-glow-white truncate">{prob.title}</h3>
                   </div>
-                  <h3 className="text-sm font-black text-glow-white mb-1">{prob.title}</h3>
-                  <p className="text-[11px] opacity-70 font-sans leading-relaxed line-clamp-2">{prob.description}</p>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
           {/* Code Editor & Workbench */}
@@ -346,8 +211,11 @@ export default function CodeSandboxPage() {
             <div className="calm-card rounded-2xl p-6 font-mono">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-inherit pb-4 mb-4">
                 <div>
-                  <span className="text-xs opacity-80 font-bold uppercase">{selectedProblem.difficulty}</span>
-                  <h2 className="text-xl font-black text-glow-white mt-0.5">{selectedProblem.title}</h2>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="rounded bg-current/10 px-2 py-0.5 text-[11px] font-bold uppercase">{selectedProblem.difficulty}</span>
+                    <span className="text-xs opacity-70 font-mono font-bold">• {selectedProblem.topic}</span>
+                  </div>
+                  <h2 className="text-xl font-black text-glow-white">{selectedProblem.title}</h2>
                 </div>
 
                 {/* Navigation Actions: Skip & Next Question */}
@@ -372,9 +240,9 @@ export default function CodeSandboxPage() {
               </div>
 
               {/* Language Switcher (JS, Python, Java, C++) */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                 <p className="text-xs font-sans opacity-85 leading-relaxed">{selectedProblem.description}</p>
-                <div className="flex items-center gap-1.5 rounded-xl border border-inherit bg-current/5 p-1 text-xs shrink-0 ml-4">
+                <div className="flex items-center gap-1.5 rounded-xl border border-inherit bg-current/5 p-1 text-xs shrink-0">
                   {['javascript', 'python', 'java', 'cpp'].map((lang) => (
                     <button
                       key={lang}
@@ -389,10 +257,10 @@ export default function CodeSandboxPage() {
                 </div>
               </div>
 
-              {/* Code Input Window */}
+              {/* Clean Initial Starter Code Input Window */}
               <div className="relative">
                 <textarea
-                  rows={12}
+                  rows={13}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   className="calm-input text-xs font-mono leading-relaxed p-4 bg-slate-950 text-emerald-400 border-inherit rounded-xl selection:bg-emerald-500 selection:text-black"
@@ -446,7 +314,7 @@ export default function CodeSandboxPage() {
                 </div>
 
                 <div className="space-y-2 text-xs">
-                  {testResults.cases.map((tc) => (
+                  {(testResults.cases || []).map((tc) => (
                     <div key={tc.id} className="flex items-center justify-between bg-slate-900 border border-slate-800 p-2.5 rounded-lg text-[11px]">
                       <div>
                         <span className="font-bold text-emerald-400">Test Case {tc.id}:</span> {tc.input}
