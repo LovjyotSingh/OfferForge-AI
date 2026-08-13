@@ -541,24 +541,83 @@ Return ONLY valid JSON:
   };
 }
 
+function calculateRealATSScore(resumeText, role) {
+  if (!resumeText || typeof resumeText !== 'string') {
+    return {
+      atsScore: 78,
+      missingKeywords: ['CI/CD Pipelines', 'System Architecture', 'Automated Testing', 'Docker']
+    };
+  }
+
+  const text = resumeText.toLowerCase();
+
+  const roleKeywords = {
+    'SDE': ['javascript', 'react', 'node', 'express', 'mongodb', 'sql', 'git', 'api', 'rest', 'data structures', 'algorithms', 'system design', 'docker', 'typescript', 'aws', 'testing', 'ci/cd', 'python', 'java', 'c++'],
+    'Frontend Developer': ['javascript', 'typescript', 'react', 'next.js', 'css', 'html', 'tailwind', 'redux', 'webpack', 'ui/ux', 'responsive', 'performance', 'jest', 'git', 'api'],
+    'Backend Developer': ['node', 'express', 'python', 'java', 'golang', 'mongodb', 'postgresql', 'sql', 'redis', 'docker', 'kubernetes', 'microservices', 'rest', 'graphql', 'system design', 'kafka'],
+    'Data Analyst': ['python', 'sql', 'excel', 'tableau', 'power bi', 'pandas', 'numpy', 'statistics', 'machine learning', 'data visualization', 'etl', 'database', 'r'],
+    'Business Analyst': ['sql', 'excel', 'data analysis', 'requirements', 'agile', 'jira', 'tableau', 'stakeholder', 'process mapping', 'documentation', 'user stories'],
+    'Product Manager': ['product strategy', 'roadmap', 'agile', 'scrum', 'user research', 'kpi', 'metrics', 'jira', 'wireframing', 'analytics', 'growth', 'stakeholder']
+  };
+
+  const keywords = roleKeywords[role] || roleKeywords['SDE'];
+  const matched = keywords.filter((kw) => text.includes(kw));
+  const keywordScore = Math.min(100, Math.round((matched.length / Math.min(keywords.length, 10)) * 100));
+
+  // Quantifiable Metrics Score (% or numbers)
+  const metricMatches = (text.match(/\d+%/g) || []).length + (text.match(/\+\d+/g) || []).length + (text.match(/\b\d+\b/g) || []).length;
+  const metricScore = Math.min(100, metricMatches * 15);
+
+  // Structural Section Score
+  const hasEducation = text.includes('education') || text.includes('b.tech') || text.includes('degree') || text.includes('university') || text.includes('college');
+  const hasProjects = text.includes('project') || text.includes('experience') || text.includes('work');
+  const hasSkills = text.includes('skill') || text.includes('technolog') || text.includes('framework');
+  const structureScore = (hasEducation ? 35 : 0) + (hasProjects ? 40 : 0) + (hasSkills ? 25 : 0);
+
+  // Length Score
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const lengthScore = words >= 200 && words <= 1200 ? 100 : (words < 200 ? 55 : 75);
+
+  const totalScore = Math.round(
+    (keywordScore * 0.40) +
+    (metricScore * 0.25) +
+    (structureScore * 0.20) +
+    (lengthScore * 0.15)
+  );
+
+  const finalScore = Math.max(52, Math.min(96, totalScore));
+  const missing = keywords.filter((kw) => !text.includes(kw)).map((kw) => kw.toUpperCase()).slice(0, 5);
+
+  return {
+    atsScore: finalScore,
+    matchedCount: matched.length,
+    missingKeywords: missing.length ? missing : ['Docker', 'CI/CD Pipelines', 'System Architecture', 'Automated Testing']
+  };
+}
+
 // Analyze resume
 async function analyzeResume(resumeText, role) {
-  const prompt = `Analyze this resume for a ${role} position. Be helpful.
+  const dynamicCalc = calculateRealATSScore(resumeText, role);
+
+  const prompt = `Analyze this resume for a ${role} position.
 
 Resume:
-${resumeText.slice(0, 2500)}
+${resumeText.slice(0, 3000)}
+
+Calculated Base Score: ${dynamicCalc.atsScore}/100.
+Missing Keywords: ${dynamicCalc.missingKeywords.join(', ')}.
 
 Return ONLY valid JSON:
 {
-  "atsScore": 78,
+  "atsScore": ${dynamicCalc.atsScore},
   "strengths": ["Clear project descriptions", "Relevant technical skill set"],
-  "improvements": ["Quantify achievements with metrics (e.g. % improvement)", "Include target role keywords"],
-  "missingKeywords": ["Docker", "CI/CD", "System Architecture", "Unit Testing"],
+  "improvements": ["Quantify achievements with metrics (e.g. % improvement)", "Include missing target keywords"],
+  "missingKeywords": ${JSON.stringify(dynamicCalc.missingKeywords)},
   "recommendations": ["Add metric-driven bullet points under projects", "Highlight core frameworks at top of skills"],
   "sectionFeedback": {
     "education": "Solid academic foundation presented clearly.",
     "experience": "Good project descriptions; recommend adding quantifiable impact metrics.",
-    "skills": "Well organized; consider adding cloud and devops toolings.",
+    "skills": "Well organized; consider adding missing cloud and tooling keywords.",
     "projects": "Impressive projects; highlight deployment and scalability details."
   }
 }`;
@@ -566,16 +625,22 @@ Return ONLY valid JSON:
   try {
     const raw = await callAI(prompt);
     const parsed = safeParseJSON(raw, null);
-    if (parsed && typeof parsed === 'object') return parsed;
+    if (parsed && typeof parsed === 'object') {
+      return {
+        ...parsed,
+        atsScore: parsed.atsScore && parsed.atsScore > 0 ? parsed.atsScore : dynamicCalc.atsScore,
+        missingKeywords: parsed.missingKeywords?.length ? parsed.missingKeywords : dynamicCalc.missingKeywords
+      };
+    }
   } catch (err) {
-    console.warn(`[AI Warning] Resume analysis failed (${err.message}). Using fallback analysis.`);
+    console.warn(`[AI Warning] Resume analysis failed (${err.message}). Using real dynamic ATS analysis.`);
   }
 
   return {
-    atsScore: 82,
+    atsScore: dynamicCalc.atsScore,
     strengths: ['Well-structured layout', 'Strong technical keyword density'],
-    improvements: ['Include quantifiable metrics in experience bullet points', 'Tailor summary section to target role'],
-    missingKeywords: ['CI/CD Pipelines', 'System Architecture', 'Automated Testing'],
+    improvements: ['Include quantifiable metrics in project bullet points', 'Tailor summary section to target role'],
+    missingKeywords: dynamicCalc.missingKeywords,
     recommendations: ['Add measurable impact to project descriptions', 'Highlight cloud deployment experience'],
     sectionFeedback: {
       education: 'Relevant coursework and academic records are well documented.',

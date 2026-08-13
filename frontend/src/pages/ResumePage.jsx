@@ -83,37 +83,53 @@ export default function ResumePage() {
   const handleDownloadPdf = () => {
     if (!optimizedData?.optimizedResume) return;
 
-    const printWin = window.open('', '_blank', 'width=800,height=900');
-    const content = optimizedData.optimizedResume
-      .replace(/^# (.*$)/gim, '<h1 style="font-size:20px;margin-bottom:4px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:4px;">$1</h1>')
-      .replace(/^## (.*$)/gim, '<h2 style="font-size:13px;margin-top:10px;margin-bottom:3px;text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:2px;">$1</h2>')
-      .replace(/^### (.*$)/gim, '<h3 style="font-size:11.5px;margin-top:6px;margin-bottom:2px;">$1</h3>')
-      .replace(/^\- (.*$)/gim, '<li style="margin-bottom:2.5px;">$1</li>')
+    const title = `Lovjyot_Singh_ATS_Resume_${targetRole.replace(/\s+/g, '_')}`;
+    const formattedBody = optimizedData.optimizedResume
+      .replace(/^# (.*$)/gim, '<h1 style="font-size:20px;margin-bottom:4px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:4px;color:#000;">$1</h1>')
+      .replace(/^## (.*$)/gim, '<h2 style="font-size:13px;margin-top:12px;margin-bottom:3px;text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:2px;color:#111;">$1</h2>')
+      .replace(/^### (.*$)/gim, '<h3 style="font-size:11.5px;margin-top:6px;margin-bottom:2px;color:#222;">$1</h3>')
+      .replace(/^\- (.*$)/gim, '<li style="margin-bottom:2.5px;color:#111;">$1</li>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>');
 
-    printWin.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Lovjyot_Singh_ATS_Resume</title>
-          <style>
-            body { font-family: 'Arial', sans-serif; font-size: 10.5pt; line-height: 1.35; color: #111; padding: 20px; }
-            ul { margin-top: 2px; margin-bottom: 5px; padding-left: 16px; }
-            h1, h2, h3 { color: #000; }
-            @page { margin: 0.35in; size: A4; }
-          </style>
-        </head>
-        <body>
-          <div>${content}</div>
-          <script>
-            window.onload = function() { window.print(); }
-          </script>
-        </body>
-      </html>
-    `);
-    printWin.document.close();
-    toast.success('Opening print dialog for PDF export!');
+    const htmlDocument = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>${title}</title>
+    <style>
+      @page { size: A4; margin: 0.35in; }
+      body { font-family: 'Arial', sans-serif; font-size: 10.5pt; line-height: 1.35; color: #111; padding: 20px; background: #fff; }
+      ul { margin-top: 2px; margin-bottom: 5px; padding-left: 16px; }
+      h1, h2, h3 { font-family: 'Arial', sans-serif; }
+    </style>
+  </head>
+  <body>
+    <div>${formattedBody}</div>
+    <script>
+      window.onload = function() { window.print(); };
+    </script>
+  </body>
+</html>`;
+
+    // Trigger direct file download
+    const blob = new Blob([htmlDocument], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Open PDF save/print window
+    const printWin = window.open('', '_blank', 'width=800,height=900');
+    if (printWin) {
+      printWin.document.write(htmlDocument);
+      printWin.document.close();
+    }
+
+    toast.success('Downloaded ATS Resume file & opened PDF save window!');
   };
 
   const innerAnalysis = resultData?.analysis || {};
