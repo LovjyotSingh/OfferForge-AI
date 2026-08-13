@@ -744,8 +744,99 @@ function generateDynamicFallbackReply(message, context = {}) {
     }
   }
 
-  if (q.includes('100%') || q.includes('score') || q.includes('perfect') || q.includes('pass') || q.includes('grade')) {
-    return `To achieve a **100% (Principal Level)** score on OfferForge AI, structure your answers with these 4 pillars:\n\n1. **Core Concept & Definitions**: Define OS/System primitives (e.g. Virtual Address Space, TLB flushing, CR3 registers, locks).\n2. **Hardware & Trade-Offs**: Detail CPU cache, latency (ns vs µs), and memory bounds.\n3. **Real-World Architecture**: Reference real systems (e.g. Nginx, Redis, Chrome, Node.js).\n4. **Metrics & Impact**: Include exact throughput/latency metrics (+35% speedup, sub-50ms latency).`;
+  if (route.includes('/code-sandbox') || q.includes('line-by-line') || q.includes('concept') || q.includes('two sum') || q.includes('valid parentheses')) {
+    if (q.includes('parentheses')) {
+      return `### 🧠 Core Concept Explanation (Valid Parentheses)
+To check if brackets are balanced, we use a **Stack (LIFO - Last In First Out)** data structure. As we iterate through the string, every opening bracket (\`(\`, \`{\`, \`[\`) is pushed onto the stack. When we encounter a closing bracket (\`)\`, \`}\`, \`]\`), we check if the top of the stack matches its corresponding opening bracket. If it matches, we pop it. If it doesn't match or the stack is empty, the string is invalid!
+
+---
+
+### 💻 Optimal Java Solution
+\`\`\`java
+import java.util.Stack;
+
+class Solution {
+    public boolean isValid(String s) {
+        Stack<Character> stack = new Stack<>();
+        for (char c : s.toCharArray()) {
+            if (c == '(' || c == '{' || c == '[') {
+                stack.push(c);
+            } else {
+                if (stack.isEmpty()) return false;
+                char top = stack.pop();
+                if (c == ')' && top != '(') return false;
+                if (c == '}' && top != '{') return false;
+                if (c == ']' && top != '[') return false;
+            }
+        }
+        return stack.isEmpty();
+    }
+}
+\`\`\`
+
+---
+
+### 📝 Line-by-Line Code Breakdown
+
+- **Line 1-2**: Import \`java.util.Stack\` and declare class \`Solution\`.
+- **Line 4**: Method \`isValid\` accepts a string \`s\` and returns boolean (\`true\`/\`false\`).
+- **Line 5**: Initialize an empty stack of characters \`stack\` to hold opening brackets.
+- **Line 6**: Loop through every character \`c\` in string \`s\` using \`s.toCharArray()\`.
+- **Line 7-8**: If \`c\` is an opening bracket (\`(\`, \`{\`, \`[\`), push it onto the top of \`stack\`.
+- **Line 9-10**: If \`c\` is a closing bracket, first check if \`stack\` is empty. If empty, return \`false\` (no matching opening bracket!).
+- **Line 11**: Pop the most recent opening bracket from the top of \`stack\` into variable \`top\`.
+- **Line 12-14**: Compare closing character \`c\` with \`top\`. If they don't match (e.g. \`)\` with \`{\`), return \`false\`.
+- **Line 17**: Return \`stack.isEmpty()\`. If all pairs matched, stack will be empty (\`true\`); otherwise \`false\`.
+
+---
+
+- **Time Complexity**: $O(N)$ — Single pass through string of length $N$.
+- **Space Complexity**: $O(N)$ — Stack stores at most $N$ opening brackets.`;
+    }
+
+    return `### 🧠 Core Concept Explanation (Two Sum)
+The brute-force approach compares every pair of numbers using two nested loops, taking $O(N^2)$ time.
+We optimize this to **$O(N)$ Time Complexity** using a **Hash Map (Lookup Table)**. As we iterate through the array, for each number \`nums[i]\`, we calculate its target complement: \`diff = target - nums[i]\`. We check if \`diff\` already exists in our Hash Map. If it exists, we found our pair! If not, we store \`nums[i]\` and its index in the Hash Map.
+
+---
+
+### 💻 Optimal Java Solution
+\`\`\`java
+import java.util.HashMap;
+import java.util.Map;
+
+class Solution {
+    public int[] twoSum(int[] nums, int target) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            int diff = target - nums[i];
+            if (map.containsKey(diff)) {
+                return new int[] { map.get(diff), i };
+            }
+            map.put(nums[i], i);
+        }
+        return new int[0];
+    }
+}
+\`\`\`
+
+---
+
+### 📝 Line-by-Line Code Breakdown
+
+- **Line 1-2**: Import \`java.util.HashMap\` and \`Map\` interface.
+- **Line 4**: Declare method \`twoSum\` accepting integer array \`nums\` and integer \`target\`.
+- **Line 5**: Instantiates \`HashMap<Integer, Integer> map\` where key = number value, value = array index.
+- **Line 6**: Loop through array from index \`i = 0\` to \`nums.length - 1\`.
+- **Line 7**: Calculate target complement: \`diff = target - nums[i]\`.
+- **Line 8-9**: Check if \`map.containsKey(diff)\`. If found, return array containing \`map.get(diff)\` (previous index) and \`i\` (current index).
+- **Line 11**: If not found yet, insert current number \`nums[i]\` and index \`i\` into \`map\`.
+- **Line 13**: Return empty array \`new int[0]\` if no pair exists.
+
+---
+
+- **Time Complexity**: $O(N)$ — Single loop with $O(1)$ Hash Map lookups.
+- **Space Complexity**: $O(N)$ — Hash Map stores at most $N$ elements.`;
   }
 
   if (q.includes('rate limit') || q.includes('redis') || q.includes('system design') || q.includes('architecture')) {
