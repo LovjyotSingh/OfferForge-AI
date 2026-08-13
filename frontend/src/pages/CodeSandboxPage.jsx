@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Code2, Play, Sparkles, Cpu, CheckCircle2, Terminal, Lightbulb, Check, X, AlertCircle } from 'lucide-react';
+import { Code2, Play, Sparkles, Cpu, CheckCircle2, Terminal, Lightbulb, Check, SkipForward, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Layout from '../components/Layout';
 import api from '../services/api';
@@ -139,6 +139,62 @@ bool isValid(std::string s) {
     return st.empty();
 }`
     }
+  },
+  {
+    id: 'best-time-stock',
+    title: '121. Best Time to Buy & Sell Stock',
+    difficulty: 'Easy',
+    description: 'You are given an array `prices` where `prices[i]` is the price of a given stock on the `i-th` day. Return the maximum profit you can achieve.',
+    testCases: [
+      { input: 'prices = [7,1,5,3,6,4]', expected: '5' },
+      { input: 'prices = [7,6,4,3,1]', expected: '0' },
+    ],
+    defaultCode: {
+      javascript: `function maxProfit(prices) {
+  let minPrice = Infinity;
+  let maxProfit = 0;
+  for (let price of prices) {
+    if (price < minPrice) minPrice = price;
+    else if (price - minPrice > maxProfit) maxProfit = price - minPrice;
+  }
+  return maxProfit;
+}`,
+      python: `def maxProfit(prices: list[int]) -> int:
+    min_price = float('inf')
+    max_profit = 0
+    for price in prices:
+        if price < min_price:
+            min_price = price
+        elif price - min_price > max_profit:
+            max_profit = price - min_price
+    return max_profit`,
+      java: `class Solution {
+    public int maxProfit(int[] prices) {
+        int minPrice = Integer.MAX_VALUE;
+        int maxProfit = 0;
+        for (int price : prices) {
+            if (price < minPrice) {
+                minPrice = price;
+            } else if (price - minPrice > maxProfit) {
+                maxProfit = price - minPrice;
+            }
+        }
+        return maxProfit;
+    }
+}`,
+      cpp: `#include <vector>
+#include <algorithm>
+
+int maxProfit(std::vector<int>& prices) {
+    int minPrice = INT_MAX;
+    int maxProfit = 0;
+    for (int price : prices) {
+        if (price < minPrice) minPrice = price;
+        else if (price - minPrice > maxProfit) maxProfit = price - minPrice;
+    }
+    return maxProfit;
+}`
+    }
   }
 ];
 
@@ -167,6 +223,17 @@ export default function CodeSandboxPage() {
     setEvaluationResult(null);
     setTestResults(null);
     setSolutionExplanation(null);
+  };
+
+  const handleNextQuestion = () => {
+    const currentIndex = SAMPLE_PROBLEMS.findIndex((p) => p.id === selectedProblem.id);
+    const nextIndex = (currentIndex + 1) % SAMPLE_PROBLEMS.length;
+    handleSelectProblem(SAMPLE_PROBLEMS[nextIndex]);
+    toast.success(`Loaded Next Problem: ${SAMPLE_PROBLEMS[nextIndex].title}`);
+  };
+
+  const handleSkipQuestion = () => {
+    handleNextQuestion();
   };
 
   const handleRunAndEvaluate = async () => {
@@ -283,8 +350,31 @@ export default function CodeSandboxPage() {
                   <h2 className="text-xl font-black text-glow-white mt-0.5">{selectedProblem.title}</h2>
                 </div>
 
-                {/* Language Switcher (JS, Python, Java, C++) */}
-                <div className="flex items-center gap-1.5 rounded-xl border border-inherit bg-current/5 p-1 text-xs">
+                {/* Navigation Actions: Skip & Next Question */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSkipQuestion}
+                    className="calm-button-outline px-3 py-1.5 text-xs font-bold uppercase flex items-center gap-1 opacity-80 hover:opacity-100"
+                    title="Skip to next problem"
+                  >
+                    <SkipForward size={13} />
+                    <span>Skip</span>
+                  </button>
+                  <button
+                    onClick={handleNextQuestion}
+                    className="calm-button px-3.5 py-1.5 text-xs font-bold uppercase flex items-center gap-1 shadow-md"
+                    title="Load next problem"
+                  >
+                    <span>Next Question</span>
+                    <ArrowRight size={13} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Language Switcher (JS, Python, Java, C++) */}
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-xs font-sans opacity-85 leading-relaxed">{selectedProblem.description}</p>
+                <div className="flex items-center gap-1.5 rounded-xl border border-inherit bg-current/5 p-1 text-xs shrink-0 ml-4">
                   {['javascript', 'python', 'java', 'cpp'].map((lang) => (
                     <button
                       key={lang}
@@ -298,8 +388,6 @@ export default function CodeSandboxPage() {
                   ))}
                 </div>
               </div>
-
-              <p className="text-xs font-sans opacity-85 leading-relaxed mb-4">{selectedProblem.description}</p>
 
               {/* Code Input Window */}
               <div className="relative">
@@ -353,7 +441,7 @@ export default function CodeSandboxPage() {
                   </div>
                   <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-bold bg-emerald-950 border border-emerald-800 px-3 py-1 rounded-lg">
                     <Check size={13} />
-                    <span>ALL TEST CASES PASSED (3/3)</span>
+                    <span>ALL TEST CASES PASSED</span>
                   </div>
                 </div>
 
