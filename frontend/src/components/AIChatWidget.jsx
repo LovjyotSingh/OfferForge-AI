@@ -72,10 +72,12 @@ export default function AIChatWidget() {
     localStorage.setItem('offerforge_chat_win_pos', JSON.stringify(chatPos));
   }, [chatPos]);
 
-  // Auto Scroll
+  const messageContainerRef = useRef(null);
+
+  // Auto Scroll internal message box only (never scrolls the outer page/window!)
   useEffect(() => {
-    if (isOpen && !isMinimized) {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isOpen && !isMinimized && messageContainerRef.current) {
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
   }, [messages, isOpen, isMinimized]);
 
@@ -399,7 +401,7 @@ export default function AIChatWidget() {
           {/* Window Body */}
           {!isMinimized && (
             <>
-              <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5 text-xs font-sans">
+              <div ref={messageContainerRef} className="flex-1 overflow-y-auto p-3.5 space-y-3.5 text-xs font-sans">
                 {messages.map((m) => (
                   <div
                     key={m.id}
