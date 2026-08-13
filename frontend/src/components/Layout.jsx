@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Cpu, FileText, LayoutDashboard, LogOut, Sparkles, User, ShieldCheck, Server } from 'lucide-react';
+import { Cpu, FileText, LayoutDashboard, LogOut, Sparkles, User, ShieldCheck, Server, Code2 } from 'lucide-react';
 import { clearAuth, getToken, getUser } from '../services/auth';
 import CyberBackground from './CyberBackground';
 import AIChatWidget from './AIChatWidget';
@@ -96,6 +96,17 @@ export default function Layout({ children, showNav = true }) {
                     >
                       <Server size={15} />
                       System Design
+                    </Link>
+                    <Link
+                      to="/code-sandbox"
+                      className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
+                        isActive('/code-sandbox')
+                          ? 'calm-button shadow-md'
+                          : 'calm-button-outline'
+                      }`}
+                    >
+                      <Code2 size={15} />
+                      Code Sandbox
                     </Link>
 
                     <div className="h-4 w-px bg-current opacity-20 mx-1"></div>

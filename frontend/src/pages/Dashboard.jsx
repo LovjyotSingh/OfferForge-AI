@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import Layout from '../components/Layout';
 import CompanyTargetSelector from '../components/CompanyTargetSelector';
 import PracticeHeatmap from '../components/PracticeHeatmap';
+import OfferPredictorCard from '../components/OfferPredictorCard';
 import api, { getApiErrorMessage } from '../services/api';
 import { getUser } from '../services/auth';
 
@@ -183,6 +184,15 @@ export default function Dashboard() {
         {/* Daily Practice Heatmap */}
         <section className="mt-6">
           <PracticeHeatmap totalSessions={stats?.overview?.totalInterviews || 0} />
+        </section>
+
+        {/* AI Compensation & Offer Package Predictor */}
+        <section className="mt-6">
+          <OfferPredictorCard
+            averageScore={stats?.overview?.averageScore || 80}
+            atsScore={stats?.overview?.highestScore || 85}
+            targetRole={user?.targetRole || 'SDE'}
+          />
         </section>
 
         {/* Company Target Matrix Selector */}
