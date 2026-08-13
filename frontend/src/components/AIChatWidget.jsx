@@ -79,15 +79,14 @@ export default function AIChatWidget() {
   useEffect(() => {
     const handleResizeOrScroll = () => {
       setCirclePos((prev) => ({
-        x: Math.max(10, Math.min(window.innerWidth - 65, prev.x)),
-        y: Math.max(10, Math.min(window.innerHeight - 65, prev.y)),
+        x: Math.max(5, Math.min(window.innerWidth - 60, prev.x)),
+        y: Math.max(5, Math.min(window.innerHeight - 60, prev.y)),
       }));
       setChatPos((prev) => {
         const chatWidth = Math.min(window.innerWidth - 20, 410);
-        const chatHeight = isMinimized ? 65 : 520;
         return {
-          x: Math.max(10, Math.min(window.innerWidth - chatWidth - 10, prev.x)),
-          y: Math.max(10, Math.min(window.innerHeight - chatHeight - 10, prev.y)),
+          x: Math.max(5, Math.min(window.innerWidth - chatWidth - 5, prev.x)),
+          y: Math.max(5, Math.min(window.innerHeight - 60, prev.y)),
         };
       });
     };
@@ -187,8 +186,8 @@ export default function AIChatWidget() {
       circleMovedRef.current = true;
     }
 
-    const clampedX = Math.max(10, Math.min(window.innerWidth - 65, circleDragStartRef.current.posX + deltaX));
-    const clampedY = Math.max(10, Math.min(window.innerHeight - 65, circleDragStartRef.current.posY + deltaY));
+    const clampedX = Math.max(5, Math.min(window.innerWidth - 60, circleDragStartRef.current.posX + deltaX));
+    const clampedY = Math.max(5, Math.min(window.innerHeight - 60, circleDragStartRef.current.posY + deltaY));
 
     setCirclePos({ x: clampedX, y: clampedY });
   };
@@ -224,10 +223,9 @@ export default function AIChatWidget() {
     const deltaY = e.clientY - chatDragStartRef.current.y;
 
     const chatWidth = Math.min(window.innerWidth - 20, 410);
-    const chatHeight = isMinimized ? 65 : 520;
 
-    const clampedX = Math.max(10, Math.min(window.innerWidth - chatWidth - 10, chatDragStartRef.current.posX + deltaX));
-    const clampedY = Math.max(10, Math.min(window.innerHeight - chatHeight - 10, chatDragStartRef.current.posY + deltaY));
+    const clampedX = Math.max(5, Math.min(window.innerWidth - chatWidth - 5, chatDragStartRef.current.posX + deltaX));
+    const clampedY = Math.max(5, Math.min(window.innerHeight - 60, chatDragStartRef.current.posY + deltaY));
 
     setChatPos({ x: clampedX, y: clampedY });
   };
