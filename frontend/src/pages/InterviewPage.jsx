@@ -39,9 +39,14 @@ export default function InterviewPage() {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const recognitionRef = useRef(null);
+  const baseTextRef = useRef('');
 
   useEffect(() => {
     fetchNextQuestion();
+    return () => {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      if (recognitionRef.current) recognitionRef.current.stop();
+    };
   }, [id]);
 
   useEffect(() => {
@@ -69,6 +74,12 @@ export default function InterviewPage() {
       setPhase('question');
       setAnswer('');
       setFeedback(null);
+
+      // Auto-speak question audio when loaded
+      const qText = typeof data.question === 'string' ? data.question : (data.question?.question || '');
+      if (qText) {
+        setTimeout(() => speakQuestionAloud(qText), 400);
+      }
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Could not fetch next question'));
     } finally {
@@ -76,7 +87,7 @@ export default function InterviewPage() {
     }
   };
 
-  // Web Speech Recognition (Voice Input)
+  // Web Speech Recognition (Voice Input - Zero Duplication Fix)
   const toggleVoiceInput = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -91,17 +102,26 @@ export default function InterviewPage() {
       return;
     }
 
+    baseTextRef.current = answer ? answer.trim() : '';
+
     const rec = new SpeechRecognition();
     rec.continuous = true;
-    rec.interimResults = true;
+    rec.interimResults = false; // Prevents duplicate interim text spam
     rec.lang = 'en-US';
 
     rec.onresult = (e) => {
-      let transcript = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        transcript += e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          const spokenChunk = e.results[i][0].transcript.trim();
+          if (spokenChunk) {
+            const updatedText = baseTextRef.current
+              ? `${baseTextRef.current} ${spokenChunk}`
+              : spokenChunk;
+            baseTextRef.current = updatedText;
+            setAnswer(updatedText);
+          }
+        }
       }
-      setAnswer((prev) => (prev ? `${prev} ${transcript}` : transcript));
     };
 
     rec.onerror = (err) => {
@@ -117,8 +137,8 @@ export default function InterviewPage() {
     toast.success('🎙️ Microphone active! Speak your answer out loud.');
   };
 
-  // Text-to-Speech Question Reader
-  const speakQuestionAloud = () => {
+  // Text-to-Speech Question Reader (Reliable Audio Synth Fix)
+  const speakQuestionAloud = (customText) => {
     if (!window.speechSynthesis) {
       toast.error('Voice audio synthesis is not supported in this browser');
       return;
@@ -130,10 +150,22 @@ export default function InterviewPage() {
       return;
     }
 
-    const qText = typeof currentQuestion === 'string' ? currentQuestion : (currentQuestion?.question || '');
+    const qText = customText || (typeof currentQuestion === 'string' ? currentQuestion : (currentQuestion?.question || ''));
+    if (!qText) return;
+
+    window.speechSynthesis.resume();
+
     const uttr = new SpeechSynthesisUtterance(qText);
     uttr.rate = 1.0;
     uttr.pitch = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      const preferredVoice = voices.find((v) => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('David')));
+      if (preferredVoice) uttr.voice = preferredVoice;
+    }
+
+    uttr.onstart = () => setIsSpeaking(true);
     uttr.onend = () => setIsSpeaking(false);
     uttr.onerror = () => setIsSpeaking(false);
 
