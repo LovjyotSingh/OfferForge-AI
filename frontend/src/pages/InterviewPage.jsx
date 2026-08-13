@@ -150,8 +150,11 @@ export default function InterviewPage() {
       return;
     }
 
-    const qText = customText || (typeof currentQuestion === 'string' ? currentQuestion : (currentQuestion?.question || ''));
-    if (!qText) return;
+    const qText = (typeof customText === 'string' && customText.trim())
+      ? customText
+      : (typeof currentQuestion === 'string' ? currentQuestion : (currentQuestion?.question || ''));
+
+    if (!qText || typeof qText !== 'string') return;
 
     window.speechSynthesis.resume();
 
@@ -290,7 +293,7 @@ export default function InterviewPage() {
                   </span>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={speakQuestionAloud}
+                      onClick={() => speakQuestionAloud()}
                       className="rounded-lg border border-inherit bg-current/10 px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 hover:bg-current/20 transition"
                       title="Read Question Aloud"
                     >
