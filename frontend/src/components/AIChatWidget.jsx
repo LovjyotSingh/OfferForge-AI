@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import {
   Bot,
@@ -295,8 +296,8 @@ export default function AIChatWidget() {
     'Explain System Design rate limiter',
   ];
 
-  return (
-    <div className="fixed z-50 font-mono select-none">
+  return createPortal(
+    <div className="fixed z-[99999] font-mono select-none">
       {/* Draggable Floating Circle Icon (HTML5 Pointer Capture & Page-Stable) */}
       <div
         style={{
@@ -331,7 +332,7 @@ export default function AIChatWidget() {
             top: `${chatPos.y}px`,
             touchAction: 'none',
           }}
-          className={`fixed z-50 w-[92vw] sm:w-[410px] rounded-2xl border border-white/25 bg-black/95 text-white shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-xl transition-all duration-150 ${
+          className={`fixed z-[99999] w-[92vw] sm:w-[410px] rounded-2xl border border-white/25 bg-black/95 text-white shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-xl transition-all duration-150 ${
             isMinimized ? 'h-16 overflow-hidden' : 'h-[520px] max-h-[80vh] flex flex-col'
           }`}
         >
@@ -473,6 +474,7 @@ export default function AIChatWidget() {
           )}
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
