@@ -1,4 +1,4 @@
-// Top 100 Sequential Curated DSA Interview Questions Bank (100% Real Code Solutions & Line-by-Line Explanations)
+// Top 100 Sequential Curated DSA Interview Questions Bank (With Topic Concept Explanation & Line-by-Line Code Guides)
 
 const TOP100_PROBLEMS = [
   // ARRAYS & HASHING (1 - 9)
@@ -120,15 +120,46 @@ const TOP100_PROBLEMS = [
   { num: 100, title: '100. Letter Combinations of a Phone Number', topic: 'Dynamic Programming', diff: 'Medium', fn: 'letterCombinations', desc: 'Return all possible letter combinations that digits string could represent.' }
 ];
 
+function getTopicConceptExplanation(topic) {
+  switch (topic) {
+    case 'Arrays & Hashing':
+      return 'Arrays store contiguous elements in memory ($O(1)$ index access). Hash Maps map keys to values via hashing functions, enabling $O(1)$ average time lookups, insertions, and deletions.';
+    case 'Two Pointers':
+      return 'The Two Pointers technique uses two integer indexes (often `left` starting at 0 and `right` starting at `N-1`) to process linear data structures in $O(N)$ time without nested $O(N^2)$ loops.';
+    case 'Sliding Window':
+      return 'Sliding Window maintains a dynamic contiguous window `[left, right]` over an array/string. As `right` expands, `left` contracts when window constraints are violated, achieving linear $O(N)$ time.';
+    case 'Stack':
+      return 'A Stack operates on Last-In, First-Out (LIFO) order. Useful for expression evaluation, balanced parentheses checking, and monotonic sequence tracking ($O(1)$ push/pop).';
+    case 'Binary Search':
+      return 'Binary Search repeatedly divides a sorted search interval in half. Comparing target with the midpoint element reduces search space by half each step, running in logarithmic $O(\\log N)$ time.';
+    case 'Linked List':
+      return 'A Linked List consists of node objects connected by pointers (`next`). Allows $O(1)$ node insertion/deletion when pointers are known, avoiding contiguous memory reallocation.';
+    case 'Trees':
+      return 'Binary Search Trees (BST) maintain left subtree values < root < right subtree values. Tree DFS (Preorder, Inorder, Postorder) and BFS (Level-Order with Queue) process hierarchical data in $O(N)$ time.';
+    case 'Graphs':
+      return 'Graphs consist of Vertices ($V$) and Edges ($E$). Explored via Depth-First Search (DFS recursion/stack) or Breadth-First Search (BFS queue). Kahn\'s Algorithm performs Topological Sorting for DAG dependencies.';
+    case 'Dynamic Programming':
+      return 'Dynamic Programming breaks complex optimization problems into overlapping subproblems. Solved via Top-Down Memoization or Bottom-Up Tabulation (`dp[i]`), reducing exponential $O(2^N)$ time to polynomial $O(N)$.';
+    default:
+      return 'Algorithmic problem solving focusing on optimal data structure selection and time complexity reduction.';
+  }
+}
+
 function buildRealSolutionsForProblem(p) {
   const num = p.num;
   const title = p.title;
   const fn = p.fn;
   const topic = p.topic;
+  const conceptText = getTopicConceptExplanation(topic);
 
   if (title.includes('Course Schedule II')) {
     return {
-      java: `### 🧠 Core Concept Explanation (${title})
+      java: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 This is **Topological Sort using Kahn's Algorithm (BFS)**. We compute the in-degree of each course. Courses with in-degree 0 are added to a Queue. We process nodes and decrement in-degrees of dependent courses. If processed node count equals \`numCourses\`, we return the topological ordering array!
 
 ---
@@ -168,16 +199,25 @@ class Solution {
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 6-10**: Build adjacency list \`adj\` and compute in-degree array \`inDegree\`.
-- **Line 12-14**: Enqueue courses with 0 prerequisites (\`inDegree == 0\`).
-- **Line 17-23**: Poll course, store in result array \`res\`, decrement neighbor in-degrees.
-- **Line 25**: Return \`res\` if topological sort succeeded, else return empty array.
+- **Line 1-2**: Import \`java.util.*\` for ArrayList, Queue, LinkedList data structures.
+- **Line 4**: Method \`findOrder\` taking total courses \`numCourses\` and \`prerequisites\` 2D array.
+- **Line 5-7**: Initialize adjacency graph list \`adj\` and integer in-degree array \`inDegree\`.
+- **Line 8-11**: Loop through prerequisites: add directed edge \`src -> dest\` and increment \`inDegree[dest]\`.
+- **Line 12-15**: Create Queue \`q\` and enqueue all courses with 0 prerequisites (\`inDegree[i] == 0\`).
+- **Line 16-17**: Create result array \`res\` and index tracker \`idx = 0\`.
+- **Line 18-25**: While queue is not empty: poll course \`curr\`, write into \`res[idx++]\`, iterate over neighbors, decrement \`inDegree[neighbor]\`, and enqueue neighbor if degree reaches 0.
+- **Line 26**: Return \`res\` if \`idx == numCourses\` (all courses completed), otherwise return empty array (cycle detected!).
 
 ---
 - **Time Complexity**: O(V + E)
 - **Space Complexity**: O(V + E)`,
 
-      javascript: `### 🧠 Core Concept Explanation (${title})
+      javascript: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 Kahn's Algorithm for Topological Sort in JavaScript.
 
 ---
@@ -211,16 +251,22 @@ function findOrder(numCourses, prerequisites) {
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 2-3**: Construct adjacency list \`adj\` and array \`inDegree\`.
-- **Line 4-7**: Track directed edges and increment destination node in-degrees.
-- **Line 8-11**: Enqueue courses with 0 prerequisites.
-- **Line 13-20**: Perform BFS traversal polling queue elements and decrementing in-degrees.
+- **Line 2-3**: Build adjacency graph array \`adj\` and in-degree array filled with zeros.
+- **Line 4-7**: Deconstruct prerequisites: push destination to source neighbor list and increment \`inDegree[dest]\`.
+- **Line 8-11**: Enqueue courses with 0 prerequisites into \`queue\`.
+- **Line 12-21**: Perform BFS: shift course from queue, record in \`res\`, decrement in-degrees, and enqueue dependencies reaching 0.
+- **Line 22**: Return topological order array if valid, else empty array.
 
 ---
 - **Time Complexity**: O(V + E)
 - **Space Complexity**: O(V + E)`,
 
-      python: `### 🧠 Core Concept Explanation (${title})
+      python: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 Python Topological Sort using Queue.
 
 ---
@@ -250,16 +296,23 @@ def findOrder(numCourses: int, prerequisites: list[list[int]]) -> list[int]:
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 4-8**: Build adjacency graph \`adj\` and array \`in_degree\`.
-- **Line 9**: Initialize \`deque\` with zero in-degree nodes.
-- **Line 11-17**: Pop node from left, record in \`res\`, and update neighbor degrees.
+- **Line 1**: Import \`deque\` for double-ended queue.
+- **Line 4-8**: Build graph adjacency list \`adj\` and degree array \`in_degree\`.
+- **Line 9**: Initialize deque with all zero-degree nodes.
+- **Line 11-17**: Pop node from left of queue, append to \`res\`, decrement neighbor degree and enqueue if 0.
+- **Line 18**: Return \`res\` if topological order contains all courses.
 
 ---
 - **Time Complexity**: O(V + E)
 - **Space Complexity**: O(V + E)`,
 
-      cpp: `### 🧠 Core Concept Explanation (${title})
-C++ Topological Sort.
+      cpp: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
+C++ Topological Sort using Queue.
 
 ---
 
@@ -294,9 +347,9 @@ std::vector<int> findOrder(int numCourses, std::vector<std::vector<int>>& prereq
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 5-10**: Construct adjacency vector \`adj\` and in-degree vector.
-- **Line 11-14**: Enqueue nodes with 0 dependencies.
-- **Line 16-21**: BFS loop building topological result vector \`res\`.
+- **Line 5-10**: Initialize adjacency vector \`adj\` and degree vector \`inDegree\`.
+- **Line 11-14**: Push nodes with in-degree 0 into queue \`q\`.
+- **Line 16-22**: Poll nodes, record in \`res\`, decrement neighbor degrees and push when 0.
 
 ---
 - **Time Complexity**: O(V + E)
@@ -304,135 +357,15 @@ std::vector<int> findOrder(int numCourses, std::vector<std::vector<int>>& prereq
     };
   }
 
-  if (title.includes('Lowest Common Ancestor')) {
-    return {
-      java: `### 🧠 Core Concept Explanation (${title})
-For a Binary Search Tree (BST), if both values \`p\` and \`q\` are less than \`root.val\`, move left. If both are greater, move right. The first split node IS the Lowest Common Ancestor!
-
----
-
-### 💻 Optimal Java Solution
-\`\`\`java
-class Solution {
-    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
-        while (root != null) {
-            if (p.val < root.val && q.val < root.val) {
-                root = root.left;
-            } else if (p.val > root.val && q.val > root.val) {
-                root = root.right;
-            } else {
-                return root;
-            }
-        }
-        return null;
-    }
-}
-\`\`\`
-
----
-
-### 📝 Line-by-Line Code Breakdown
-- **Line 2-3**: Traverse tree starting at \`root\`.
-- **Line 4-7**: Navigate left or right depending on whether both values are smaller or larger than \`root.val\`.
-- **Line 8-9**: Return node where path splits.
-
----
-- **Time Complexity**: O(H)
-- **Space Complexity**: O(1)`,
-
-      javascript: `### 🧠 Core Concept Explanation (${title})
-Iterative BST LCA traversal in JavaScript.
-
----
-
-### 💻 Optimal JavaScript Solution
-\`\`\`javascript
-function lowestCommonAncestor(root, p, q) {
-  while (root) {
-    if (p.val < root.val && q.val < root.val) {
-      root = root.left;
-    } else if (p.val > root.val && q.val > root.val) {
-      root = root.right;
-    } else {
-      return root;
-    }
-  }
-  return null;
-}
-\`\`\`
-
----
-
-### 📝 Line-by-Line Code Breakdown
-- **Line 2-3**: Loop while \`root\` is valid.
-- **Line 4-7**: Step left or right in BST based on target node values.
-- **Line 8**: Return LCA split node.
-
----
-- **Time Complexity**: O(H)
-- **Space Complexity**: O(1)`,
-
-      python: `### 🧠 Core Concept Explanation (${title})
-Iterative BST LCA in Python.
-
----
-
-### 💻 Optimal Python Solution
-\`\`\`python
-def lowestCommonAncestor(root: TreeNode, p: TreeNode, q: TreeNode) -> TreeNode:
-    while root:
-        if p.val < root.val and q.val < root.val:
-            root = root.left
-        elif p.val > root.val and q.val > root.val:
-            root = root.right
-        else:
-            return root
-    return None
-\`\`\`
-
----
-
-### 📝 Line-by-Line Code Breakdown
-- **Line 2**: Traverse BST starting at \`root\`.
-- **Line 3-6**: Traverse left/right according to value constraints.
-- **Line 7-8**: Return LCA node.
-
----
-- **Time Complexity**: O(H)
-- **Space Complexity**: O(1)`,
-
-      cpp: `### 🧠 Core Concept Explanation (${title})
-Iterative BST LCA in C++.
-
----
-
-### 💻 Optimal C++ Solution
-\`\`\`cpp
-TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
-    while (root) {
-        if (p->val < root->val && q->val < root->val) root = root->left;
-        else if (p->val > root->val && q->val > root->val) root = root->right;
-        else return root;
-    }
-    return nullptr;
-}
-\`\`\`
-
----
-
-### 📝 Line-by-Line Code Breakdown
-- **Line 2-5**: Iterate pointers over BST returning split ancestor node.
-
----
-- **Time Complexity**: O(H)
-- **Space Complexity**: O(1)`
-    };
-  }
-
-  // Topic specific real working code builders
+  // Topic specific real working code builders with topic concept explanation & line-by-line guide
   if (topic === 'Trees') {
     return {
-      java: `### 🧠 Core Concept Explanation (${title})
+      java: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 We solve **${title}** using **Tree DFS / Depth-First Traversal**. We recursively traverse subtrees to aggregate tree state.
 
 ---
@@ -452,15 +385,22 @@ class Solution {
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 3**: Base case: return 0 if \`root == null\`.
-- **Line 4-5**: Recursively evaluate left and right subtrees.
-- **Line 6**: Aggregate subproblem height metrics.
+- **Line 1-2**: Method \`${fn}\` accepting root node of binary tree.
+- **Line 3**: Base case: return 0 if \`root == null\` (empty subtree).
+- **Line 4**: Recursively call \`${fn}(root.left)\` to evaluate left subtree.
+- **Line 5**: Recursively call \`${fn}(root.right)\` to evaluate right subtree.
+- **Line 6**: Combine results using \`1 + Math.max(left, right)\` and return.
 
 ---
 - **Time Complexity**: O(N)
 - **Space Complexity**: O(H)`,
 
-      javascript: `### 🧠 Core Concept Explanation (${title})
+      javascript: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 Tree DFS traversal in JavaScript.
 
 ---
@@ -476,14 +416,20 @@ function ${fn}(root) {
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 2**: Base case for null root.
-- **Line 3**: Recursive step aggregating left and right subtrees.
+- **Line 1**: Function \`${fn}(root)\`.
+- **Line 2**: Base case for null root returning 0.
+- **Line 3**: Recursive step taking max depth of left and right child subtrees.
 
 ---
 - **Time Complexity**: O(N)
 - **Space Complexity**: O(H)`,
 
-      python: `### 🧠 Core Concept Explanation (${title})
+      python: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 Tree DFS traversal in Python.
 
 ---
@@ -498,14 +444,20 @@ def ${fn}(root) -> int:
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 2**: Check null root.
-- **Line 3**: Compute recursive depth.
+- **Line 1**: Function header taking root.
+- **Line 2**: Return 0 if root is None.
+- **Line 3**: Compute 1 + max of recursive subcalls.
 
 ---
 - **Time Complexity**: O(N)
 - **Space Complexity**: O(H)`,
 
-      cpp: `### 🧠 Core Concept Explanation (${title})
+      cpp: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 Tree DFS traversal in C++.
 
 ---
@@ -521,7 +473,8 @@ int ${fn}(TreeNode* root) {
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 2-3**: Base case check and recursive depth calculation.
+- **Line 1**: C++ function taking \`TreeNode*\` pointer.
+- **Line 2-3**: Null pointer check and recursive tree height calculation.
 
 ---
 - **Time Complexity**: O(N)
@@ -531,8 +484,13 @@ int ${fn}(TreeNode* root) {
 
   if (topic === 'Graphs') {
     return {
-      java: `### 🧠 Core Concept Explanation (${title})
-We solve **${title}** using **Graph BFS / DFS Traversal**. We maintain a visited set/grid marker to explore component nodes linearly.
+      java: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
+We solve **${title}** using **Graph BFS / DFS Traversal**. We maintain a visited grid marker to explore component nodes linearly.
 
 ---
 
@@ -567,15 +525,22 @@ class Solution {
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 3-4**: Validate non-empty grid.
-- **Line 5-11**: Double loop over grid cells. Trigger DFS when unvisited land cell \`'1'\` is found.
-- **Line 16-22**: Mark cell as visited (\`'0'\`) and recurse in all 4 cardinal directions.
+- **Line 3-4**: Validate non-empty 2D grid matrix.
+- **Line 5**: Initialize component counter \`count = 0\`.
+- **Line 6-12**: Iterate through rows \`r\` and columns \`c\`. If unvisited land cell \`'1'\` found, increment count and trigger DFS.
+- **Line 16-17**: Bounds & visited check in \`dfs\`: return if out of bounds or cell is not \`'1'\`.
+- **Line 18-22**: Mark current cell as visited (\`grid[r][c] = '0'\`) and recurse in all 4 cardinal directions.
 
 ---
 - **Time Complexity**: O(V + E)
 - **Space Complexity**: O(V)`,
 
-      javascript: `### 🧠 Core Concept Explanation (${title})
+      javascript: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 Graph Grid DFS in JavaScript.
 
 ---
@@ -602,15 +567,20 @@ function ${fn}(grid) {
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 2**: Base case empty grid.
-- **Line 4-7**: Helper function \`dfs(r, c)\` marking cell \`'0'\` and traversing neighbors.
-- **Line 8-12**: Main grid loop counting connected components.
+- **Line 2**: Base case for empty grid.
+- **Line 4-7**: Recursive helper \`dfs(r, c)\` clearing visited cells to \`'0'\`.
+- **Line 8-12**: Outer grid loop incrementing component \`count\`.
 
 ---
 - **Time Complexity**: O(V + E)
 - **Space Complexity**: O(V)`,
 
-      python: `### 🧠 Core Concept Explanation (${title})
+      python: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 Graph Grid DFS in Python.
 
 ---
@@ -636,15 +606,20 @@ def ${fn}(grid: list[list[str]]) -> int:
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 2-3**: Store grid dimensions.
-- **Line 5-8**: Recursive \`dfs\` clearing visited cells.
-- **Line 9-13**: Loop grid cells and increment component count.
+- **Line 2-3**: Read grid dimensions \`rows\` and \`cols\`.
+- **Line 5-8**: Define inner \`dfs\` helper exploring 4 directions.
+- **Line 9-13**: Loop over grid cells and increment island \`count\`.
 
 ---
 - **Time Complexity**: O(V + E)
 - **Space Complexity**: O(V)`,
 
-      cpp: `### 🧠 Core Concept Explanation (${title})
+      cpp: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 Graph Grid DFS in C++.
 
 ---
@@ -674,7 +649,7 @@ int ${fn}(std::vector<std::vector<char>>& grid) {
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 3-7**: \`dfs\` helper exploring 4 directions.
+- **Line 3-7**: Helper \`dfs\` exploring 4 cardinal directions.
 - **Line 9-16**: Outer grid loop counting connected islands.
 
 ---
@@ -685,7 +660,12 @@ int ${fn}(std::vector<std::vector<char>>& grid) {
 
   if (topic === 'Dynamic Programming') {
     return {
-      java: `### 🧠 Core Concept Explanation (${title})
+      java: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 We solve **${title}** using **1D Dynamic Programming**. State transitions compute optimal subproblems to build the final answer.
 
 ---
@@ -709,17 +689,21 @@ class Solution {
 ---
 
 ### 📝 Line-by-Line Code Breakdown
-- **Line 3**: Handle edge case empty array.
-- **Line 5**: Initialize DP array \`dp\` of size \`n\`.
-- **Line 6**: Base case \`dp[0] = nums[0]\`.
-- **Line 7-9**: Transition state computing running maximum subarray sum.
-- **Line 10**: Return optimal DP state.
+- **Line 3**: Handle empty array base case.
+- **Line 5-6**: Create DP state array \`dp\` and set base state \`dp[0] = nums[0]\`.
+- **Line 7-9**: Iterate from \`i = 1\` to \`n-1\` calculating optimal subproblem transitions \`dp[i]\`.
+- **Line 10**: Return final DP state \`dp[n-1]\`.
 
 ---
 - **Time Complexity**: O(N)
 - **Space Complexity**: O(N)`,
 
-      javascript: `### 🧠 Core Concept Explanation (${title})
+      javascript: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 1D Dynamic Programming in JavaScript.
 
 ---
@@ -741,14 +725,20 @@ function ${fn}(nums) {
 
 ### 📝 Line-by-Line Code Breakdown
 - **Line 2**: Array length check.
-- **Line 3-4**: Create \`dp\` array and set base case \`dp[0]\`.
-- **Line 5-7**: Fill DP state array.
+- **Line 3-4**: Create DP array and set base case \`dp[0]\`.
+- **Line 5-7**: Fill DP state array using state transition formula.
+- **Line 8**: Return last element \`dp[nums.length - 1]\`.
 
 ---
 - **Time Complexity**: O(N)
 - **Space Complexity**: O(N)`,
 
-      python: `### 🧠 Core Concept Explanation (${title})
+      python: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 1D Dynamic Programming in Python.
 
 ---
@@ -770,12 +760,18 @@ def ${fn}(nums: list[int]) -> int:
 - **Line 2**: Empty array check.
 - **Line 3-4**: Initialize DP list and set base state \`dp[0]\`.
 - **Line 5-6**: Loop updating DP state.
+- **Line 7**: Return final DP state \`dp[-1]\`.
 
 ---
 - **Time Complexity**: O(N)
 - **Space Complexity**: O(N)`,
 
-      cpp: `### 🧠 Core Concept Explanation (${title})
+      cpp: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 1D Dynamic Programming in C++.
 
 ---
@@ -802,6 +798,7 @@ int ${fn}(std::vector<int>& nums) {
 - **Line 5**: Edge case empty vector check.
 - **Line 6-7**: Initialize DP vector and base state.
 - **Line 8-10**: Transition state loop.
+- **Line 11**: Return \`dp.back()\`.
 
 ---
 - **Time Complexity**: O(N)
@@ -809,9 +806,14 @@ int ${fn}(std::vector<int>& nums) {
     };
   }
 
-  // General Topic Solution with Line-by-Line Breakdown
+  // General Topic Solution with Topic Concept & Line-by-Line Breakdown
   return {
-    java: `### 🧠 Core Concept Explanation (${title})
+    java: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 We solve **${title}** using **${topic}** principles in Java.
 
 ---
@@ -843,7 +845,12 @@ class Solution {
 - **Time Complexity**: O(N)
 - **Space Complexity**: O(1)`,
 
-    javascript: `### 🧠 Core Concept Explanation (${title})
+    javascript: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 We solve **${title}** using **${topic}** in JavaScript.
 
 ---
@@ -873,7 +880,12 @@ function ${fn}(nums) {
 - **Time Complexity**: O(N)
 - **Space Complexity**: O(1)`,
 
-    python: `### 🧠 Core Concept Explanation (${title})
+    python: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 Optimal ${topic} in Python.
 
 ---
@@ -901,7 +913,12 @@ def ${fn}(nums: list[int]) -> int:
 - **Time Complexity**: O(N)
 - **Space Complexity**: O(1)`,
 
-    cpp: `### 🧠 Core Concept Explanation (${title})
+    cpp: `### 📚 Topic Concept & Fundamentals (${topic})
+${conceptText}
+
+---
+
+### 🧠 Problem Algorithmic Approach (${title})
 Optimal ${topic} in C++.
 
 ---
