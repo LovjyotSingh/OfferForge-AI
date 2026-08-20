@@ -6,3 +6,5 @@ dist/
 uploads/
 *.log
 frontend/vite-dev.log
+portfolio_repo/
+swiftshelf/

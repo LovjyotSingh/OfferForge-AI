@@ -113,8 +113,8 @@ async function callGemini(prompt, options = {}) {
     throw new Error('AI_API_KEY is not configured or valid in Vercel environment variables.');
   }
 
-  const requestedModel = process.env.AI_MODEL || 'gemini-1.5-flash';
-  const fallbackModels = [requestedModel, 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'].filter((v, i, a) => a.indexOf(v) === i);
+  const requestedModel = process.env.AI_MODEL || 'gemini-3.5-flash-lite';
+  const fallbackModels = [requestedModel, 'gemini-3.5-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'].filter((v, i, a) => a.indexOf(v) === i);
 
   const temperature = Number.isFinite(options.temperature) ? options.temperature : 0.7;
   const maxOutputTokens = Number.isFinite(options.maxOutputTokens) ? options.maxOutputTokens : 2000;
@@ -400,7 +400,7 @@ function getFallbackEvaluation(question, answer, role) {
 
 async function getAIStatus() {
   const provider = getProvider();
-  const model = process.env.AI_MODEL || 'gemini-1.5-flash';
+  const model = process.env.AI_MODEL || 'gemini-3.5-flash-lite';
   const apiKey = getApiKey();
 
   if (!apiKey) {
@@ -1119,6 +1119,7 @@ class Solution {
 }
 
 async function chatWithContext(message, context = {}) {
+
   const currentRoute = context.currentRoute || '/';
   const userName = context.userName || 'Candidate';
   const targetRole = context.targetRole || 'SDE';
@@ -1158,4 +1159,146 @@ Instructions:
   return generateDynamicFallbackReply(message, context);
 }
 
-module.exports = { generateQuestions, evaluateResponse, generateOverallFeedback, analyzeResume, generateOptimizedResume, chatWithContext, getAIStatus };
+async function generateJobCopilotAnalysis(params = {}) {
+
+  const {
+    jobDescription = '',
+    companyName = '',
+    roleTitle = 'Software Engineer',
+    customQuestions = '',
+    userProfile = {}
+  } = params;
+
+  const candidateName = userProfile.name || 'Lovjyot Singh';
+  const candidateSummary = userProfile.summary || 'Software Development Engineer & CS graduate from USICT (GGSIPU), JEE Main AIR 14,000 (98.38th percentile). Full-stack web, distributed systems, and AI integration.';
+  const candidateSkills = userProfile.skills || 'JavaScript, TypeScript, React.js, Next.js 15, Node.js, Express.js, Python, C++, MongoDB, Redis, Prisma, Docker, CI/CD, Microservices, Gemini API, Vector Search, JWT, Concurrency';
+  const candidateProjects = userProfile.projects || 'OfferForge AI (Next.js, Node.js, Gemini 2.0 multimodal failover, multi-language IDE sandbox, 95%+ ATS optimizer), SwiftShelf (Next.js 15 App Router, TypeScript, Redis atomic 2-phase lock with Lua, 1536-d Gemini visual vector search, Prisma ORM)';
+
+  const prompt = `You are the Lead Technical Recruiter and Career Strategist at OfferForge AI.
+Analyze the following Job Description against the candidate's master engineering profile and generate a comprehensive application strategy.
+
+CANDIDATE MASTER PROFILE:
+- Name: ${candidateName}
+- Professional Background: ${candidateSummary}
+- Core Skills: ${candidateSkills}
+- Signature Projects: ${candidateProjects}
+- Key Metrics: JEE Main AIR 14,000 (98.38 percentile), 150+ DSA problems solved, 0% overselling Redis concurrency architecture, sub-50ms API latencies.
+
+TARGET JOB DETAILS:
+- Company: ${companyName || 'Target Company'}
+- Role: ${roleTitle}
+- Job Description:
+${jobDescription || 'Full Stack / Software Development Engineer role working on scalable web architectures, APIs, and modern frontends.'}
+
+${customQuestions ? `CUSTOM SCREENING QUESTIONS TO ANSWER:\n${customQuestions}\n` : ''}
+
+CRITICAL FORMATTING INSTRUCTIONS FOR APPLICATION NOTES:
+- Do NOT use bullet points in application notes, pitches, or custom question answers. Write exclusively in fluid, confident, compelling PARAGRAPHS.
+- Avoid generic buzzwords. Directly cite relevant technical achievements (e.g. Next.js 15, Redis Lua atomic locks, Gemini 2.0 microservices, C++/Python systems).
+- Keep Wellfound Note under 140 words (perfect for startup founders).
+- Keep LinkedIn InMail under 110 words.
+- Keep Formal Cover Note around 180 words (2 focused paragraphs).
+
+Return STRICTLY a valid JSON object matching this schema (no markdown fences, no raw text outside JSON):
+{
+  "matchScore": 88,
+  "matchLevel": "Strong Match",
+  "summary": "Concise 2-sentence breakdown of why the candidate is a strong fit for this exact role.",
+  "matchedSkills": ["TypeScript", "Next.js 15", "Node.js", "Redis"],
+  "missingKeywords": ["GraphQL", "AWS Lambda"],
+  "highlightProjects": [
+    {
+      "name": "SwiftShelf",
+      "reason": "Directly demonstrates high-concurrency Redis Lua locking and Next.js 15 architecture required by this role."
+    },
+    {
+      "name": "OfferForge AI",
+      "reason": "Showcases multimodal AI integration with Gemini 2.0 and sub-50ms REST APIs."
+    }
+  ],
+  "pitches": {
+    "wellfoundNote": "High-impact paragraph tailored for startup founders on Wellfound. No bullet points.",
+    "linkedInDM": "Concise message to message a recruiter or engineering manager on LinkedIn. No bullet points.",
+    "formalCoverNote": "Professional two-paragraph cover letter suitable for Greenhouse or Lever. No bullet points."
+  },
+  "customQuestionAnswers": [
+    {
+      "question": "Question text here",
+      "answer": "Compelling answer in a well-written paragraph citing relevant experience without bullet points."
+    }
+  ],
+  "interviewTips": [
+    "Tip on what architectural concept or project feature to emphasize during interviews."
+  ]
+}`;
+
+  try {
+    const rawResponse = await callAI(prompt, { temperature: 0.5, maxTokens: 2500, maxOutputTokens: 2500 });
+    if (rawResponse) {
+      let cleaned = rawResponse.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+      if (parsed && typeof parsed === 'object') {
+        parsed.matchScore = Math.max(10, Math.min(99, Number(parsed.matchScore) || 85));
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn(`[AI Warning] Job Copilot Gemini call failed (${err.message}). Using fallback analysis engine.`);
+  }
+
+  // Graceful deterministic fallback
+  const jdLower = (jobDescription || '').toLowerCase();
+  const allCandidateSkills = ['TypeScript', 'JavaScript', 'React.js', 'Next.js 15', 'Node.js', 'Express.js', 'Python', 'C++', 'MongoDB', 'Redis', 'Docker', 'CI/CD', 'Prisma', 'REST APIs', 'System Design'];
+  const matchedSkills = allCandidateSkills.filter(s => jdLower.includes(s.toLowerCase().split(' ')[0]));
+  if (!matchedSkills.includes('React.js')) matchedSkills.push('React.js');
+  if (!matchedSkills.includes('TypeScript')) matchedSkills.push('TypeScript');
+  if (!matchedSkills.includes('Node.js')) matchedSkills.push('Node.js');
+
+  const matchScore = Math.min(96, Math.max(78, 75 + matchedSkills.length * 2));
+
+  return {
+    matchScore,
+    matchLevel: matchScore >= 85 ? 'Strong Match' : 'Good Match',
+    summary: `Your full-stack background in ${matchedSkills.slice(0, 3).join(', ')} and production projects aligns closely with ${companyName || 'this company'}'s engineering requirements for ${roleTitle}.`,
+    matchedSkills: matchedSkills.slice(0, 6),
+    missingKeywords: ['Cloud Optimization', 'GraphQL', 'AWS ECS'].filter(k => !jdLower.includes(k.toLowerCase())),
+    highlightProjects: [
+      {
+        name: 'OfferForge AI',
+        reason: 'Demonstrates end-to-end full-stack engineering, Gemini AI microservices with failover, and sub-50ms API performance.'
+      },
+      {
+        name: 'SwiftShelf',
+        reason: 'Highlights high-concurrency architecture with atomic 2-phase Redis locking (Lua scripts) and Next.js 15 App Router.'
+      }
+    ],
+    pitches: {
+      wellfoundNote: `What excites me about ${companyName || 'your team'} is the opportunity to work on high-impact products alongside a fast-moving engineering team. As a Computer Science graduate from USICT with strong experience across ${matchedSkills.slice(0, 3).join(', ')}, I enjoy taking end-to-end ownership of scalable web features and low-latency APIs. In my flagship projects, I have architected high-concurrency systems with Redis atomic locking and integrated multimodal AI workflows. I take pride in clean code, automated CI/CD pipelines, and rapid execution. Based in NCR, I am eager to hit the ground running and deliver immediate value to ${companyName || 'your team'}.`,
+      linkedInDM: `Hi! I noticed the ${roleTitle} opening at ${companyName || 'your company'} and wanted to reach out. I am a Full-Stack Engineer with strong production experience in ${matchedSkills.slice(0, 3).join(', ')}, building high-concurrency platforms like SwiftShelf and AI-native applications like OfferForge AI. I would love to learn more about your engineering priorities and share how my technical background can contribute to your team.`,
+      formalCoverNote: `I am writing to express my strong interest in the ${roleTitle} position at ${companyName || 'your organization'}. With a Bachelor of Technology in Computer Science from USICT (JEE Main AIR 14,000, 98.38th percentile) and practical experience building scalable full-stack applications, I am eager to contribute to your engineering initiatives.\n\nThroughout my work on projects like OfferForge AI and SwiftShelf, I have architected concurrency-safe microservices with Redis Lua scripts, implemented Gemini AI vector search, and built responsive web applications with sub-50ms response times. I thrive in collaborative environments where performance, clean architecture, and rapid deployment cycles are prioritized, and I look forward to the opportunity to discuss how my skill set aligns with your team's goals.`
+    },
+    customQuestionAnswers: customQuestions ? [
+      {
+        question: customQuestions.split('\n')[0] || 'Why are you interested in this role?',
+        answer: `I am drawn to this opportunity because it combines my passion for building scalable web architectures with challenging engineering problems in ${matchedSkills.slice(0, 2).join(' and ')}. Having taken complex full-stack projects from 0 to 1 with atomic concurrency controls and automated CI/CD pipelines, I am eager to bring high ownership and clean execution to the team.`
+      }
+    ] : [],
+    interviewTips: [
+      `Emphasize your atomic Redis locking mechanism (Lua scripts) in SwiftShelf to demonstrate your command over concurrency.`,
+      `Highlight your multimodal Gemini 2.0 integration and sub-50ms API response metrics in OfferForge AI.`,
+      `Mention your JEE Main AIR 14,000 (98.38th percentile) to highlight strong analytical and algorithmic problem-solving ability.`
+    ]
+  };
+}
+
+module.exports = {
+  generateQuestions,
+  evaluateResponse,
+  generateOverallFeedback,
+  analyzeResume,
+  generateOptimizedResume,
+  chatWithContext,
+  generateJobCopilotAnalysis,
+  getAIStatus
+};
+

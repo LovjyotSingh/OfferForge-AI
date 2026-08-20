@@ -13,6 +13,7 @@ const ResumePage = lazy(() => import('./pages/ResumePage'));
 const SystemDesignPage = lazy(() => import('./pages/SystemDesignPage'));
 const VerifyCertificatePage = lazy(() => import('./pages/VerifyCertificatePage'));
 const CodeSandboxPage = lazy(() => import('./pages/CodeSandboxPage'));
+const JobCopilotPage = lazy(() => import('./pages/JobCopilotPage'));
 
 const savedTheme = localStorage.getItem('offerforge_theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/interview/:id" element={<PrivateRoute><InterviewPage /></PrivateRoute>} />
           <Route path="/resume" element={<PrivateRoute><ResumePage /></PrivateRoute>} />
+          <Route path="/job-copilot" element={<PrivateRoute><JobCopilotPage /></PrivateRoute>} />
           <Route path="/system-design" element={<PrivateRoute><SystemDesignPage /></PrivateRoute>} />
           <Route path="/code-sandbox" element={<PrivateRoute><CodeSandboxPage /></PrivateRoute>} />
           <Route path="/verify/:id" element={<VerifyCertificatePage />} />
@@ -63,3 +65,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
+

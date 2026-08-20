@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SDE Masterclass: Redis, Docker & CI/CD Pipelines</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Fira+Code:wght@400;600&display=swap');
+    
+    @page {
+      size: A4;
+      margin: 15mm;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.6;
+      margin: 0;
+      padding: 24px;
+      font-size: 13px;
+    }
+    
+    .cover-banner {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      color: #ffffff;
+      padding: 32px;
+      border-radius: 16px;
+      margin-bottom: 28px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3);
+    }
+    
+    .cover-banner h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #38bdf8;
+    }
+    
+    .cover-banner h2 {
+      margin: 8px 0 0 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+    
+    .cover-banner p {
+      margin: 12px 0 0 0;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    
+    .section-title {
+      background: #4f46e5;
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 32px;
+      margin-bottom: 16px;
+      page-break-after: avoid;
+    }
+
+    .section-title.docker {
+      background: #2563eb;
+    }
+
+    .section-title.cicd {
+      background: #059669;
+    }
+    
+    h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 20px;
+      margin-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 4px;
+      page-break-after: avoid;
+    }
+    
+    p {
+      margin: 0 0 10px 0;
+      color: #334155;
+    }
+    
+    ul {
+      margin: 0 0 14px 0;
+      padding-left: 20px;
+    }
+    
+    li {
+      margin-bottom: 6px;
+      color: #334155;
+    }
+    
+    li strong {
+      color: #0f172a;
+    }
+    
+    pre {
+      background: #090d16;
+      color: #38bdf8;
+      font-family: 'Fira Code', monospace;
+      font-size: 11px;
+      padding: 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid #1e293b;
+      margin: 10px 0 16px 0;
+      page-break-inside: avoid;
+    }
+    
+    code {
+      font-family: 'Fira Code', monospace;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .print-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #38bdf8;
+      color: #0f172a;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+      z-index: 1000;
+    }
+    
+    @media print {
+      .print-btn { display: none; }
+      body { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <button class="print-btn" onclick="window.print()">🖨️ Save as PDF</button>
+
+  <div class="cover-banner">
+    <h1>SDE MASTERCLASS HANDBOOK</h1>
+    <h2>Redis 0 to 100 &nbsp;|&nbsp; Docker 0 to 100 &nbsp;|&nbsp; CI/CD Pipelines 0 to 100</h2>
+    <p>Production System Architecture, Distributed Concurrency &amp; Interview Blueprint &nbsp;•&nbsp; By Lovjyot Singh</p>
+  </div>
+
+  <!-- SECTION 1: REDIS 0 TO 100 -->
+  <div class="section-title">Section 1: Redis 0 to 100 (In-Memory Distributed Mastery)</div>
+
+  <h3>1. Core Fundamentals &amp; High-Speed Architecture</h3>
+  <p>Redis (Remote Dictionary Server) is an open-source, in-memory key-value data store delivering sub-millisecond latency at 100,000+ QPS.</p>
+  <ul>
+    <li><strong>RAM Latency vs Disk:</strong> RAM access (~100ns) is 1,000x faster than NVMe SSDs (~100,000ns). Redis stores all datasets directly in RAM.</li>
+    <li><strong>Single-Threaded Execution Core:</strong> Command execution runs on a single-threaded loop, eliminating context switching, race conditions, and thread locking overhead.</li>
+    <li><strong>Non-Blocking I/O Multiplexing:</strong> Uses Linux <code>epoll</code> / macOS <code>kqueue</code> Reactor event loops to process thousands of socket connections without blocking.</li>
+    <li><strong>Redis 6.0+ I/O Threads:</strong> Network socket reading/writing is offloaded to background threads while execution core remains 100% single-threaded.</li>
+  </ul>
+
+  <h3>2. Data Structures &amp; C Implementations</h3>
+  <ul>
+    <li><strong>Strings:</strong> Binary safe up to 512MB. Implemented via Simple Dynamic String (SDS). Commands: <code>SET</code>, <code>GET</code>, <code>INCRBY</code>, <code>SETNX</code>.</li>
+    <li><strong>Hashes:</strong> Field-value objects implemented via <code>listpack</code> or <code>hashtable</code>. Ideal for user profiles &amp; structured SKU objects.</li>
+    <li><strong>Lists:</strong> Doubly-linked <code>quicklist</code>. Commands: <code>LPUSH</code>, <code>RPOP</code>, <code>BRPOP</code> (blocking queues for job processing).</li>
+    <li><strong>Sets:</strong> Unordered unique strings. Implemented via <code>intset</code> or <code>hashtable</code> (<code>SADD</code>, <code>SINTER</code>).</li>
+    <li><strong>Sorted Sets (ZSet):</strong> Ranked score-element pairs implemented via SkipList + HashTable (O(log N)). Used for leaderboards &amp; rate limiters.</li>
+    <li><strong>HyperLogLog:</strong> Probabilistic cardinality estimator counting billions of unique items with 0.81% error rate in 12KB RAM (<code>PFADD</code>, <code>PFCOUNT</code>).</li>
+  </ul>
+
+  <h3>3. Concurrency, Locks &amp; Lua Scripting</h3>
+  <p>To execute multi-command atomic transactions without network roundtrips, Redis supports Lua scripts via <code>EVAL</code>.</p>
+  <ul>
+    <li><strong>SwiftShelf 2-Phase Concurrency Lock:</strong> Deducts stock and creates a 10-minute lock key in a single atomic Lua script to guarantee 0% overselling during flash sales.</li>
+  </ul>
+<pre>-- Atomic Lua Script Example
+local current = tonumber(redis.call('GET', KEYS[1]))
+if current and current >= tonumber(ARGV[1]) then
+    redis.call('DECRBY', KEYS[1], ARGV[1])
+    redis.call('SET', KEYS[2], ARGV[2], 'PX', ARGV[3])
+    return 1 -- Success
+else
+    return 0 -- Out of Stock
+end</pre>
+  <ul>
+    <li><strong>Eviction Policies:</strong> <code>allkeys-lru</code> (Least Recently Used), <code>allkeys-lfu</code> (Least Frequently Used), <code>volatile-ttl</code>, and <code>noeviction</code> (returns error on full RAM).</li>
+  </ul>
+
+  <h3>4. Persistence, Replication &amp; Clustering</h3>
+  <ul>
+    <li><strong>RDB (Redis DB Snapshot):</strong> Point-in-time binary snapshots (<code>dump.rdb</code>) via <code>fork()</code> child process. Fast startup, potential minor data loss on crash.</li>
+    <li><strong>AOF (Append-Only File):</strong> Logs every write operation to <code>appendonly.aof</code> with <code>fsync everysec</code> policy. Sub-1s data loss.</li>
+    <li><strong>Redis Cluster (Sharding):</strong> Distributes datasets across 16,384 Hash Slots calculated via <code>CRC16(key) % 16384</code> across master nodes.</li>
+  </ul>
+
+  <h3>5. System Design Interview Patterns &amp; Pitfalls</h3>
+  <ul>
+    <li><strong>Cache Stampede (Thundering Herd):</strong> When a hot key expires, thousands hit DB simultaneously. Fix: Mutex lock or XFetch early expiration.</li>
+    <li><strong>Cache Penetration:</strong> Non-existent key queries bypass cache to DB. Fix: Cache null values (<code>SET key "-1" EX 300</code>) or Bloom Filters.</li>
+    <li><strong>Cache Breakdown:</strong> A single hot key expires. Fix: Set no TTL or update key asynchronously in background.</li>
+  </ul>
+
+  <!-- SECTION 2: DOCKER 0 TO 100 -->
+  <div class="section-title docker">Section 2: Docker 0 to 100 (Containerization &amp; Runtime Architecture)</div>
+
+  <h3>1. Containerization vs Virtualization</h3>
+  <p>Virtual Machines emulate hardware with Hypervisors and guest OS per VM. Containers share the Host OS Kernel, launching in milliseconds with lightweight RAM usage.</p>
+  <ul>
+    <li><strong>Linux Namespaces:</strong> Provides process isolation: PID (processes), NET (network interfaces), MNT (mount points), IPC (inter-process communication).</li>
+    <li><strong>Linux Control Groups (cgroups):</strong> Enforces resource limits and metering: restricts CPU, Memory, Disk I/O per container.</li>
+  </ul>
+
+  <h3>2. Docker Engine Architecture</h3>
+  <ul>
+    <li><strong>Components:</strong> Docker CLI &rarr; Docker REST API &rarr; Docker Daemon (<code>dockerd</code>) &rarr; <code>containerd</code> &rarr; <code>runc</code> (OCI runtime).</li>
+    <li><strong>Union File Systems (Overlay2):</strong> Container images consist of read-only stacked layers. Container instances write to a Copy-on-Write (CoW) top layer.</li>
+  </ul>
+
+  <h3>3. Dockerfile Best Practices &amp; Multi-Stage Builds</h3>
+  <p>Multi-stage builds separate build tools from final runtime images to minimize security attack vectors and image size (from 1GB down to 50MB).</p>
+<pre># Multi-Stage Dockerfile Example
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+USER node
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+RUN npm ci --only=production
+EXPOSE 3000
+CMD ["node", "dist/index.js"]</pre>
+  <ul>
+    <li><strong>Layer Caching:</strong> Order Dockerfile directives from least to most frequently changed (<code>COPY package.json</code> before <code>COPY .</code>).</li>
+    <li><strong>Security Hardening:</strong> Never run container as root. Use <code>USER node</code> or <code>USER 1001</code>, run security scans (Trivy), and use <code>.dockerignore</code>.</li>
+  </ul>
+
+  <h3>4. Docker Networking &amp; Volumes</h3>
+  <ul>
+    <li><strong>Bridge Network:</strong> Default isolated network driver for containers running on the same single host.</li>
+    <li><strong>Host Network:</strong> Removes network isolation between container and host for maximum performance.</li>
+    <li><strong>Volumes vs Bind Mounts:</strong> Volumes are managed by Docker in <code>/var/lib/docker/volumes</code> (best for production). Bind mounts map exact host paths.</li>
+  </ul>
+
+  <!-- SECTION 3: CI/CD PIPELINES 0 TO 100 -->
+  <div class="section-title cicd">Section 3: CI/CD Pipelines 0 to 100 (Automated Deployment &amp; DevOps)</div>
+
+  <h3>1. Core Concepts: CI vs CD vs CD</h3>
+  <ul>
+    <li><strong>Continuous Integration (CI):</strong> Automated code compilation, linting, unit testing, and static analysis triggered on every git push or pull request.</li>
+    <li><strong>Continuous Delivery (CD):</strong> Automates build artifacts (Docker images tagged with Git SHA to registry) &amp; staging deployment; manual approval for prod.</li>
+    <li><strong>Continuous Deployment (CD):</strong> Fully automated pipeline passing all tests and pushing code directly to production without manual intervention.</li>
+  </ul>
+
+  <h3>2. Complete Production Pipeline Lifecycle</h3>
+  <p>Git Push &rarr; Lint &amp; Type Check &rarr; Run Unit Tests &rarr; Build OCI Image &rarr; Security Vulnerability Scan &rarr; Push to Registry &rarr; Deploy &rarr; Smoke Test &rarr; Auto Rollback on Failure.</p>
+
+  <h3>3. Enterprise Deployment Strategies</h3>
+  <ul>
+    <li><strong>Blue-Green Deployment:</strong> Two identical production environments (Blue=Active, Green=Idle). Traffic switched instantaneously at Load Balancer level. 0 downtime, instant rollback.</li>
+    <li><strong>Canary Deployment:</strong> Routes 5%-10% of live traffic to the new version. Monitors error rates &amp; metrics before scaling to 100%.</li>
+    <li><strong>Rolling Update:</strong> Sequentially replaces old instances with new instances batch-by-batch across the cluster.</li>
+  </ul>
+
+  <h3>4. GitHub Actions Production Workflow</h3>
+<pre>name: Production CI/CD Pipeline
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - run: npm run test:unit
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ghcr.io/lovjyotsingh/swiftshelf:${{ github.sha }}</pre>
+
+  <h3>5. Pipeline Security &amp; Best Practices</h3>
+  <ul>
+    <li><strong>Least Privilege Access:</strong> Scope GitHub Actions tokens (<code>permissions: contents: read, packages: write</code>).</li>
+    <li><strong>Secret Masking:</strong> Never hardcode credentials; inject secrets at runtime via environment variables.</li>
+    <li><strong>Ephemeral Runners:</strong> Use disposable, isolated runner instances for build environments to prevent cross-contamination.</li>
+  </ul>
+
+</body>
+</html>

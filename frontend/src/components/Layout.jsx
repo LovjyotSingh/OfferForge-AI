@@ -87,6 +87,17 @@ export default function Layout({ children, showNav = true }) {
                       ATS Scanner
                     </Link>
                     <Link
+                      to="/job-copilot"
+                      className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
+                        isActive('/job-copilot')
+                          ? 'calm-button shadow-md'
+                          : 'calm-button-outline'
+                      }`}
+                    >
+                      <Sparkles size={15} className="text-emerald-400" />
+                      Job Copilot
+                    </Link>
+                    <Link
                       to="/system-design"
                       className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
                         isActive('/system-design')
@@ -108,6 +119,7 @@ export default function Layout({ children, showNav = true }) {
                       <Code2 size={15} />
                       Code Sandbox
                     </Link>
+
 
                     <div className="h-4 w-px bg-current opacity-20 mx-1"></div>
 

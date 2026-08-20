@@ -317,11 +317,10 @@ export default function InterviewPage() {
                   </label>
                   <button
                     onClick={toggleVoiceInput}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition border ${
-                      isListening
-                        ? 'bg-red-500 text-white border-red-400 animate-pulse'
-                        : 'border-inherit bg-current/10 hover:bg-current/20'
-                    }`}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition border ${isListening
+                      ? 'bg-red-500 text-white border-red-400 animate-pulse'
+                      : 'border-inherit bg-current/10 hover:bg-current/20'
+                      }`}
                   >
                     {isListening ? <MicOff size={13} /> : <Mic size={13} />}
                     <span>{isListening ? '🎙️ Listening... (Stop)' : '🎙️ Speak Answer'}</span>

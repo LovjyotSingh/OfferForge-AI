@@ -25,3 +25,27 @@ exports.chat = async (req, res) => {
     res.status(500).json({ status: 'error', message: err.message || 'AI Chat assistance failed' });
   }
 };
+
+// POST /api/ai/job-copilot
+exports.analyzeJobCopilot = async (req, res) => {
+  try {
+    const { jobDescription, companyName, roleTitle, customQuestions, userProfile } = req.body;
+
+    const result = await ai.generateJobCopilotAnalysis({
+      jobDescription: jobDescription || '',
+      companyName: companyName || '',
+      roleTitle: roleTitle || 'Software Development Engineer',
+      customQuestions: customQuestions || '',
+      userProfile: userProfile || {
+        name: req.user?.name || 'Lovjyot Singh'
+      }
+    });
+
+    res.json({ status: 'success', data: result });
+  } catch (err) {
+    console.error('Job Copilot error:', err);
+    res.status(500).json({ status: 'error', message: err.message || 'Job analysis failed' });
+  }
+};
+
+
