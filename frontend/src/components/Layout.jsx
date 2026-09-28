@@ -1,204 +1,150 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Cpu, FileText, LayoutDashboard, LogOut, Sparkles, User, ShieldCheck, Server, Code2 } from 'lucide-react';
+import { useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
+import { LogOut, Menu, X } from 'lucide-react';
+import Logo from './Logo';
+import { EASE, PageTransition } from './motion';
 import { clearAuth, getToken, getUser } from '../services/auth';
-import CyberBackground from './CyberBackground';
-import AIChatWidget from './AIChatWidget';
-import ThemeSelector from './ThemeSelector';
 
-export default function Layout({ children, showNav = true }) {
+export function Backdrop() {
+  return (
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div className="absolute left-1/2 top-[-18rem] h-[36rem] w-[60rem] -translate-x-1/2 rounded-full bg-ember-600/20 blur-[140px] animate-breathe" />
+      <div
+        className="absolute inset-0 opacity-[0.35]"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(245,241,234,0.09) 1px, transparent 1px)',
+          backgroundSize: '28px 28px',
+          maskImage: 'radial-gradient(ellipse 70% 55% at 50% 0%, #000 30%, transparent 75%)'
+        }}
+      />
+    </div>
+  );
+}
+
+function Navbar() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const user = getUser();
   const token = getToken();
+  const user = getUser();
+  const { scrollY } = useScroll();
+  const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useMotionValueEvent(scrollY, 'change', latest => {
+    const previous = scrollY.getPrevious() ?? 0;
+    setScrolled(latest > 12);
+    setHidden(latest > 240 && latest > previous && !open);
+  });
 
   const logout = () => {
     clearAuth();
+    setOpen(false);
     navigate('/');
   };
 
-  const isActive = (path) => location.pathname === path;
+  const initial = (user?.name || '?').trim().charAt(0).toUpperCase();
 
   return (
-    <div className="app-shell relative flex flex-col justify-between font-sans min-h-screen">
-      {/* Dynamic Background Canvas */}
-      <CyberBackground />
+    <motion.header
+      animate={{ y: hidden ? -96 : 0 }}
+      transition={{ duration: 0.45, ease: EASE }}
+      className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-6"
+    >
+      <nav
+        className={`mx-auto flex h-14 max-w-6xl items-center justify-between rounded-2xl border px-3 pl-4 transition-all duration-500 ${
+          scrolled || open ? 'border-line bg-ink-950/70 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl' : 'border-transparent'
+        }`}
+      >
+        <Logo />
 
-      {showNav && (
-        <header className="sticky top-0 z-50 theme-header border-b backdrop-blur-xl shadow-lg">
-          {/* Top Ticker Bar */}
-          <div className="border-b border-inherit px-4 py-1.5 text-[11px] flex items-center justify-between font-mono opacity-90">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 font-semibold">
-                <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></span>
-                SYSTEM ACTIVE
+        <div className="hidden items-center gap-2 sm:flex">
+          {token ? (
+            <>
+              <NavLink
+                to="/dashboard"
+                className={({ isActive }) => `rounded-full px-4 py-2 text-sm transition ${isActive ? 'text-paper' : 'text-muted hover:text-paper'}`}
+              >
+                Dashboard
+              </NavLink>
+              <div className="mx-1 h-5 w-px bg-line" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-ember-500/15 text-xs font-semibold text-ember-300" title={user?.name}>
+                {initial}
               </span>
-              <span className="hidden sm:inline-block opacity-40">|</span>
-              <span className="hidden sm:flex items-center gap-1 font-semibold">
-                <ShieldCheck size={13} />
-                COPYRIGHT © 2026 LOVJYOT SINGH
-              </span>
-            </div>
-            <div className="flex items-center gap-3 font-semibold">
-              <ThemeSelector />
-              <span className="hidden sm:inline-block opacity-30">|</span>
-              <span className="hidden sm:inline-block">POWERED BY GEMINI AI</span>
-            </div>
-          </div>
-
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <div className="flex min-h-16 items-center justify-between py-3">
-              {/* Brand Logo */}
-              <button onClick={() => navigate('/')} className="flex items-center gap-3 text-left group">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl calm-button font-bold shadow-md transition-transform group-hover:scale-105">
-                  <Cpu size={20} />
-                </div>
-                <div className="leading-none">
-                  <div className="text-xl font-black tracking-tight text-glow-white flex items-center gap-1">
-                    OfferForge <span>AI</span>
-                  </div>
-                  <div className="text-[10px] font-mono tracking-widest opacity-80 uppercase mt-0.5 font-bold">Career Matrix Studio</div>
-                </div>
+              <button onClick={logout} className="rounded-full p-2 text-muted transition hover:bg-white/5 hover:text-paper" aria-label="Log out" title="Log out">
+                <LogOut size={16} />
               </button>
-
-              {/* Navigation Items */}
-              <nav className="hidden items-center gap-3 sm:flex">
-                {token ? (
-                  <>
-                    <Link
-                      to="/dashboard"
-                      className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
-                        isActive('/dashboard')
-                          ? 'calm-button shadow-md'
-                          : 'calm-button-outline'
-                      }`}
-                    >
-                      <LayoutDashboard size={15} />
-                      Dashboard
-                    </Link>
-                    <Link
-                      to="/resume"
-                      className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
-                        isActive('/resume')
-                          ? 'calm-button shadow-md'
-                          : 'calm-button-outline'
-                      }`}
-                    >
-                      <FileText size={15} />
-                      ATS Scanner
-                    </Link>
-                    <Link
-                      to="/job-copilot"
-                      className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
-                        isActive('/job-copilot')
-                          ? 'calm-button shadow-md'
-                          : 'calm-button-outline'
-                      }`}
-                    >
-                      <Sparkles size={15} className="text-emerald-400" />
-                      Job Copilot
-                    </Link>
-                    <Link
-                      to="/system-design"
-                      className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
-                        isActive('/system-design')
-                          ? 'calm-button shadow-md'
-                          : 'calm-button-outline'
-                      }`}
-                    >
-                      <Server size={15} />
-                      System Design
-                    </Link>
-                    <Link
-                      to="/code-sandbox"
-                      className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
-                        isActive('/code-sandbox')
-                          ? 'calm-button shadow-md'
-                          : 'calm-button-outline'
-                      }`}
-                    >
-                      <Code2 size={15} />
-                      Code Sandbox
-                    </Link>
-
-
-                    <div className="h-4 w-px bg-current opacity-20 mx-1"></div>
-
-                    <div className="flex items-center gap-2 rounded-lg border border-inherit px-3 py-1.5 text-xs font-bold">
-                      <User size={13} />
-                      <span>{user?.name || 'Candidate'}</span>
-                    </div>
-
-                    <button
-                      onClick={logout}
-                      className="flex items-center gap-1.5 rounded-lg calm-button-outline px-3 py-1.5 text-xs font-semibold transition"
-                      title="Log Out"
-                    >
-                      <LogOut size={14} />
-                      Exit
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      to="/login"
-                      className="calm-button-outline px-4 py-1.5 text-xs font-bold uppercase transition"
-                    >
-                      Log In
-                    </Link>
-                    <Link
-                      to="/register"
-                      className="calm-button px-4 py-1.5 text-xs font-bold uppercase tracking-wider"
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <Sparkles size={14} />
-                        Get Started
-                      </span>
-                    </Link>
-                  </>
-                )}
-              </nav>
-
-              {/* Mobile Trigger Button */}
-              <div className="sm:hidden flex items-center gap-2">
-                {token ? (
-                  <button
-                    onClick={() => navigate('/dashboard')}
-                    className="calm-button px-3.5 py-1.5 text-xs font-bold uppercase"
-                  >
-                    Dashboard
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="calm-button px-3.5 py-1.5 text-xs font-bold uppercase"
-                  >
-                    Log In
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
-      )}
-
-      <main className="flex-1 relative z-10">{children}</main>
-
-      {/* Global Draggable Floating AI Chatbot Widget */}
-      <AIChatWidget />
-
-      {/* Dynamic Theme Footer */}
-      <footer className="relative z-10 theme-footer border-t">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 text-xs sm:flex-row sm:px-6 font-mono opacity-90">
-          <div className="flex items-center gap-2">
-            <span>Copyright &copy; 2026 <strong className="font-bold">Lovjyot Singh</strong>. OfferForge AI Matrix. All Rights Reserved.</span>
-          </div>
-          <div className="flex items-center gap-4 text-[11px] font-semibold">
-            <span>AUTHOR: LOVJYOT SINGH</span>
-            <span>•</span>
-            <span className="font-bold uppercase">OFFERFORGE AI MATRIX</span>
-          </div>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="rounded-full px-4 py-2 text-sm text-muted transition hover:text-paper">
+                Sign in
+              </Link>
+              <Link to="/register" className="btn-primary py-2">
+                Start practicing
+              </Link>
+            </>
+          )}
         </div>
-      </footer>
+
+        <button onClick={() => setOpen(v => !v)} className="rounded-xl p-2 text-paper sm:hidden" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open}>
+          {open ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </nav>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            className="mx-auto mt-2 max-w-6xl rounded-2xl border border-line bg-ink-950/90 p-2 backdrop-blur-xl sm:hidden"
+          >
+            {token ? (
+              <>
+                <Link to="/dashboard" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-sm hover:bg-white/5">
+                  Dashboard
+                </Link>
+                <button onClick={logout} className="block w-full rounded-xl px-4 py-3 text-left text-sm text-muted hover:bg-white/5">
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-sm hover:bg-white/5">
+                  Sign in
+                </Link>
+                <Link to="/register" onClick={() => setOpen(false)} className="btn-primary mt-1 w-full">
+                  Start practicing
+                </Link>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.header>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-line">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-xs text-faint sm:flex-row">
+        <span>© {new Date().getFullYear()} OfferForge AI · Built by Lovjyot Singh</span>
+        <span>Practice like it's the real thing.</span>
+      </div>
+    </footer>
+  );
+}
+
+export default function Layout({ children, footer = true }) {
+  return (
+    <div className="relative flex min-h-screen flex-col">
+      <Backdrop />
+      <Navbar />
+      <PageTransition className="flex-1">{children}</PageTransition>
+      {footer && <Footer />}
     </div>
   );
 }

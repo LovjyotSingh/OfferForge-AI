@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { USER_TARGET_ROLES } = require('../config/interviewRoles');
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true, minlength: 2, maxlength: 50 },
@@ -8,7 +9,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['student', 'admin'], default: 'student' },
   targetRole: {
     type: String,
-    enum: ['SDE', 'Data Analyst', 'Business Analyst', 'Product Manager', 'Not Set'],
+    enum: USER_TARGET_ROLES,
     default: 'Not Set'
   },
   profile: {

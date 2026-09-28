@@ -2,24 +2,74 @@ const Interview = require('../models/Interview.model');
 const Response = require('../models/Response.model');
 const User = require('../models/User.model');
 const ai = require('../services/ai.service');
+const { LEVELS, getRole, getSection, buildPlan, locateQuestion, publicCatalog } = require('../config/interviewRoles');
+
+const MAX_ANSWER_LENGTH = 20000;
+
+function progressOf(interview) {
+  return {
+    answered: interview.answeredQuestions,
+    total: interview.totalQuestions,
+    finished: interview.answeredQuestions >= interview.totalQuestions
+  };
+}
+
+function summarize(interview) {
+  return {
+    _id: interview._id,
+    roleId: interview.roleId,
+    targetRole: interview.targetRole,
+    difficulty: interview.difficulty,
+    levelLabel: (LEVELS[interview.difficulty] || LEVELS.medium).label,
+    status: interview.status,
+    sections: interview.sections,
+    startTime: interview.startTime,
+    ...progressOf(interview)
+  };
+}
+
+function questionPayload(interview, pending) {
+  const position = locateQuestion(interview.sections, pending.index);
+  return {
+    index: pending.index,
+    question: pending.question,
+    hint: pending.hint,
+    sectionIndex: position.sectionIndex,
+    indexInSection: position.indexInSection,
+    section: position.section,
+    rubric: getSection(pending.sectionKey)?.rubric || []
+  };
+}
+
+// GET /api/interviews/roles
+exports.getRoles = (req, res) => {
+  res.json({ status: 'success', data: publicCatalog() });
+};
 
 // POST /api/interviews/start
 exports.startInterview = async (req, res) => {
   try {
-    const { targetRole, difficulty = 'medium', questionCount = 10 } = req.body;
-    if (!targetRole) return res.status(400).json({ status: 'error', message: 'targetRole is required' });
+    const { roleId, difficulty = 'easy' } = req.body;
+    const role = getRole(roleId);
+    if (!role) return res.status(400).json({ status: 'error', message: 'Pick a valid role' });
+    if (!LEVELS[difficulty]) return res.status(400).json({ status: 'error', message: 'Pick a valid level' });
 
+    await Interview.updateMany(
+      { userId: req.user.id, status: 'in-progress' },
+      { $set: { status: 'abandoned', pendingQuestion: null } }
+    );
+
+    const sections = buildPlan(role);
     const interview = await Interview.create({
       userId: req.user.id,
-      targetRole,
+      roleId: role.id,
+      targetRole: role.title,
       difficulty,
-      totalQuestions: questionCount
+      sections,
+      totalQuestions: sections.reduce((n, s) => n + s.count, 0)
     });
 
-    res.status(201).json({
-      status: 'success',
-      data: { interviewId: interview._id, targetRole, totalQuestions: questionCount }
-    });
+    res.status(201).json({ status: 'success', data: { interviewId: interview._id } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: 'error', message: 'Could not start interview' });
@@ -27,190 +77,244 @@ exports.startInterview = async (req, res) => {
 };
 
 // GET /api/interviews/:id/next-question
+// Idempotent: returns the question currently on the table, generating it only if none exists.
 exports.getNextQuestion = async (req, res) => {
   try {
-    const interview = await Interview.findOne({ _id: req.params.id, userId: req.user.id })
-      .populate('responses', 'question');
-
+    let interview = await Interview.findOne({ _id: req.params.id, userId: req.user.id });
     if (!interview) return res.status(404).json({ status: 'error', message: 'Interview not found' });
 
-    if (interview.answeredQuestions >= interview.totalQuestions) {
-      return res.json({ status: 'success', data: { completed: true } });
+    const base = { interview: summarize(interview) };
+    if (interview.status !== 'in-progress' || interview.answeredQuestions >= interview.totalQuestions) {
+      return res.json({ status: 'success', data: { ...base, question: null } });
     }
 
-    const previousQuestions = interview.responses.map(r => r.question);
-    const uniquenessSeed = `${interview._id}-${req.user.id}-${interview.createdAt?.getTime?.() || Date.now()}`;
-    const questions = await ai.generateQuestions(
-      interview.targetRole,
-      interview.difficulty,
-      1,
-      previousQuestions,
-      { uniquenessSeed }
+    const index = interview.answeredQuestions;
+    if (interview.pendingQuestion && interview.pendingQuestion.index === index) {
+      return res.json({ status: 'success', data: { ...base, question: questionPayload(interview, interview.pendingQuestion) } });
+    }
+
+    const { section } = locateQuestion(interview.sections, index);
+    const sectionConfig = getSection(section.key);
+    if (!sectionConfig) return res.status(500).json({ status: 'error', message: `Unknown section "${section.key}"` });
+
+    const previous = await Response.find({ interviewId: interview._id }).select('question').lean();
+    const generated = await ai.generateQuestion({
+      roleTitle: interview.targetRole,
+      level: interview.difficulty,
+      section: sectionConfig,
+      previous: previous.map(r => r.question)
+    });
+
+    const pending = { index, sectionKey: section.key, ...generated, askedAt: new Date() };
+
+    // Only one concurrent request may set the question; the others return whatever won.
+    const claimed = await Interview.findOneAndUpdate(
+      {
+        _id: interview._id,
+        status: 'in-progress',
+        answeredQuestions: index,
+        $or: [{ pendingQuestion: null }, { 'pendingQuestion.index': { $ne: index } }]
+      },
+      { $set: { pendingQuestion: pending } },
+      { new: true }
     );
 
-    if (!questions.length) return res.status(500).json({ status: 'error', message: 'AI failed to generate question. Check your API key.' });
+    interview = claimed || await Interview.findById(interview._id);
+    if (!interview.pendingQuestion || interview.pendingQuestion.index !== interview.answeredQuestions) {
+      return res.status(409).json({ status: 'error', message: 'The interview moved on. Refresh to continue.' });
+    }
 
-    res.json({
-      status: 'success',
-      data: {
-        question: questions[0],
-        currentIndex: interview.answeredQuestions,
-        totalQuestions: interview.totalQuestions,
-        completed: false
-      }
-    });
+    res.json({ status: 'success', data: { interview: summarize(interview), question: questionPayload(interview, interview.pendingQuestion) } });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ status: 'error', message: err.message || 'Failed to get question' });
+    res.status(500).json({ status: 'error', message: 'Could not load the next question' });
   }
 };
 
-// POST /api/interviews/:id/submit-response
-exports.submitResponse = async (req, res) => {
+async function recordResponse(req, res, { skip }) {
+  const answer = skip ? '' : String(req.body.answer ?? '');
+  if (!skip && !answer.trim()) {
+    return res.status(400).json({ status: 'error', message: 'Write an answer before submitting' });
+  }
+  if (answer.length > MAX_ANSWER_LENGTH) {
+    return res.status(400).json({ status: 'error', message: `Answers are limited to ${MAX_ANSWER_LENGTH} characters` });
+  }
+
+  // Take the pending question atomically so a double submit cannot grade it twice.
+  const interview = await Interview.findOneAndUpdate(
+    { _id: req.params.id, userId: req.user.id, status: 'in-progress', pendingQuestion: { $ne: null } },
+    { $set: { pendingQuestion: null } }
+  );
+  if (!interview) {
+    return res.status(409).json({ status: 'error', message: 'There is no open question to answer' });
+  }
+
+  const pending = interview.pendingQuestion;
+  const sectionConfig = getSection(pending.sectionKey);
+
   try {
-    const { question, questionCategory, answer, timeSpent } = req.body;
-    if (!question) return res.status(400).json({ status: 'error', message: 'question is required' });
-    if (answer === undefined || answer === null) {
-      return res.status(400).json({ status: 'error', message: 'answer is required' });
-    }
-
-    const interview = await Interview.findOne({ _id: req.params.id, userId: req.user.id });
-    if (!interview) return res.status(404).json({ status: 'error', message: 'Interview not found' });
-
-    const normalizedAnswer = String(answer);
-    const isBlankAnswer = normalizedAnswer.trim().length === 0;
-    const evaluation = isBlankAnswer
+    const evaluation = skip
       ? {
+        graded: true,
         score: 0,
-        technicalScore: 0,
-        clarityScore: 0,
-        confidenceScore: 0,
-        strengths: ['No answer submitted'],
-        improvements: ['Provide at least a brief attempt to receive meaningful feedback'],
-        feedback: 'No response was provided, so this question is scored 0.'
+        verdict: 'Skipped',
+        rubric: [],
+        strengths: [],
+        improvements: [],
+        feedback: 'Skipped. In a real interview, talking through a partial idea almost always scores better than skipping.',
+        idealAnswer: []
       }
-      : await ai.evaluateResponse(question, normalizedAnswer, interview.targetRole);
+      : await ai.evaluateAnswer({
+        roleTitle: interview.targetRole,
+        level: interview.difficulty,
+        section: sectionConfig,
+        question: pending.question,
+        answer
+      });
 
+    const timeSpent = Math.max(0, Math.min(Number(req.body.timeSpent) || 0, 4 * 60 * 60));
     const response = await Response.create({
       interviewId: interview._id,
-      question,
-      category: questionCategory || 'technical',
-      userAnswer: normalizedAnswer,
-      timeSpent: timeSpent || 0,
+      index: pending.index,
+      sectionKey: pending.sectionKey,
+      sectionTitle: sectionConfig.title,
+      question: pending.question,
+      hint: pending.hint,
+      skipped: skip,
+      userAnswer: answer,
+      timeSpent,
       evaluation
     });
 
-    interview.responses.push(response._id);
-    interview.answeredQuestions += 1;
-    await interview.save();
+    const updated = await Interview.findByIdAndUpdate(
+      interview._id,
+      { $push: { responses: response._id }, $inc: { answeredQuestions: 1 } },
+      { new: true }
+    );
 
-    res.json({
-      status: 'success',
-      data: { evaluation, nextQuestionAvailable: interview.answeredQuestions < interview.totalQuestions }
-    });
+    res.json({ status: 'success', data: { response, progress: progressOf(updated) } });
+  } catch (err) {
+    await Interview.updateOne(
+      { _id: interview._id, pendingQuestion: null, answeredQuestions: interview.answeredQuestions },
+      { $set: { pendingQuestion: pending } }
+    );
+    throw err;
+  }
+}
+
+// POST /api/interviews/:id/answer
+exports.submitAnswer = async (req, res) => {
+  try {
+    await recordResponse(req, res, { skip: false });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ status: 'error', message: err.message || 'Evaluation failed' });
+    res.status(500).json({ status: 'error', message: 'Could not save your answer. Try again.' });
   }
 };
 
-// POST /api/interviews/:id/skip-question
+// POST /api/interviews/:id/skip
 exports.skipQuestion = async (req, res) => {
   try {
-    const { question, questionCategory, timeSpent } = req.body;
-    if (!question) return res.status(400).json({ status: 'error', message: 'question is required' });
-
-    const interview = await Interview.findOne({ _id: req.params.id, userId: req.user.id });
-    if (!interview) return res.status(404).json({ status: 'error', message: 'Interview not found' });
-
-    if (interview.answeredQuestions >= interview.totalQuestions) {
-      return res.status(400).json({ status: 'error', message: 'Interview is already complete' });
-    }
-
-    const response = await Response.create({
-      interviewId: interview._id,
-      question,
-      category: questionCategory || 'technical',
-      skipped: true,
-      userAnswer: '[SKIPPED]',
-      timeSpent: timeSpent || 0,
-      evaluation: {
-        score: 0,
-        technicalScore: 0,
-        clarityScore: 0,
-        confidenceScore: 0,
-        strengths: [],
-        improvements: [],
-        feedback: 'Question skipped by user.'
-      }
-    });
-
-    interview.responses.push(response._id);
-    interview.answeredQuestions += 1;
-    await interview.save();
-
-    res.json({
-      status: 'success',
-      data: { skipped: true, nextQuestionAvailable: interview.answeredQuestions < interview.totalQuestions }
-    });
+    await recordResponse(req, res, { skip: true });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ status: 'error', message: err.message || 'Could not skip question' });
+    res.status(500).json({ status: 'error', message: 'Could not skip the question. Try again.' });
   }
 };
+
+function average(values) {
+  return values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : null;
+}
 
 // POST /api/interviews/:id/complete
 exports.completeInterview = async (req, res) => {
   try {
-    const interview = await Interview.findOne({ _id: req.params.id, userId: req.user.id });
+    const interview = await Interview.findOne({ _id: req.params.id, userId: req.user.id }).populate('responses');
     if (!interview) return res.status(404).json({ status: 'error', message: 'Interview not found' });
 
-    await interview.complete();
+    if (interview.status === 'completed') {
+      return res.json({ status: 'success', data: { interview } });
+    }
+    if (interview.status !== 'in-progress' || interview.answeredQuestions < interview.totalQuestions) {
+      return res.status(400).json({ status: 'error', message: 'Answer every question before finishing' });
+    }
 
-    // Generate AI overall feedback
-    let feedback = {};
-    try {
-      feedback = await ai.generateOverallFeedback(interview.targetRole, interview.overallScore, interview.scores);
-    } catch { feedback = { summary: 'Great effort! Keep practicing.', strengths: [], improvementAreas: [], recommendations: [] }; }
+    const gradedScores = r => (r.evaluation?.graded && r.evaluation.score !== null ? [r.evaluation.score] : []);
 
-    interview.strengths = feedback.strengths;
-    interview.improvementAreas = feedback.improvementAreas;
-    interview.overallFeedback = feedback.summary;
-    await interview.save();
+    const sections = interview.sections.map(section => {
+      const inSection = interview.responses.filter(r => r.sectionKey === section.key);
+      return {
+        key: section.key,
+        title: section.title,
+        score: average(inSection.flatMap(gradedScores)),
+        notes: inSection.map(r => ({ section: section.title, score: r.evaluation?.score ?? null, feedback: r.evaluation?.feedback || '' }))
+      };
+    });
+    const overallScore = average(interview.responses.flatMap(gradedScores));
 
-    // Update user stats
-    await User.findByIdAndUpdate(req.user.id, {
-      $inc: { 'stats.totalInterviews': 1 },
-      'stats.lastInterviewDate': new Date()
+    const debrief = await ai.generateOverallFeedback({
+      roleTitle: interview.targetRole,
+      level: interview.difficulty,
+      overallScore,
+      sections
     });
 
-    res.json({
-      status: 'success',
-      data: { ...interview.toObject(), feedback }
-    });
+    const endTime = new Date();
+    const result = await Interview.updateOne(
+      { _id: interview._id, status: 'in-progress' },
+      {
+        $set: {
+          sections: interview.sections.map((s, i) => ({ ...s.toObject(), score: sections[i].score })),
+          overallScore,
+          recommendation: ai.hireRecommendation(overallScore),
+          overallFeedback: debrief.summary,
+          strengths: debrief.strengths,
+          improvementAreas: debrief.improvementAreas,
+          recommendations: debrief.recommendations,
+          status: 'completed',
+          endTime,
+          duration: Math.floor((endTime - interview.startTime) / 1000)
+        }
+      }
+    );
+
+    if (result.modifiedCount === 1) {
+      const scored = await Interview.find({ userId: req.user.id, status: 'completed', overallScore: { $ne: null } }).select('overallScore').lean();
+      await User.findByIdAndUpdate(req.user.id, {
+        $inc: { 'stats.totalInterviews': 1 },
+        $set: {
+          'stats.lastInterviewDate': endTime,
+          'stats.averageScore': average(scored.map(i => i.overallScore)) || 0
+        }
+      });
+    }
+
+    const completed = await Interview.findById(interview._id)
+      .select('-pendingQuestion')
+      .populate({ path: 'responses', options: { sort: { index: 1 } } });
+    res.json({ status: 'success', data: { interview: completed } });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ status: 'error', message: 'Could not complete interview' });
+    res.status(500).json({ status: 'error', message: 'Could not finish the interview' });
   }
 };
 
 // GET /api/interviews/history
 exports.getHistory = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = 10;
-    const interviews = await Interview.find({ userId: req.user.id, status: 'completed' })
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .select('targetRole overallScore scores duration createdAt');
+    const filter = { userId: req.user.id, status: 'completed' };
+    const [interviews, total] = await Promise.all([
+      Interview.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .select('targetRole difficulty overallScore recommendation sections duration createdAt'),
+      Interview.countDocuments(filter)
+    ]);
 
-    const total = await Interview.countDocuments({ userId: req.user.id, status: 'completed' });
-
-    res.json({
-      status: 'success',
-      data: { interviews, total, page, totalPages: Math.ceil(total / limit) }
-    });
+    res.json({ status: 'success', data: { interviews, total, page, totalPages: Math.ceil(total / limit) } });
   } catch (err) {
     res.status(500).json({ status: 'error', message: 'Could not fetch history' });
   }
@@ -220,7 +324,8 @@ exports.getHistory = async (req, res) => {
 exports.getInterview = async (req, res) => {
   try {
     const interview = await Interview.findOne({ _id: req.params.id, userId: req.user.id })
-      .populate('responses');
+      .select('-pendingQuestion')
+      .populate({ path: 'responses', options: { sort: { index: 1 } } });
     if (!interview) return res.status(404).json({ status: 'error', message: 'Interview not found' });
     res.json({ status: 'success', data: { interview } });
   } catch (err) {

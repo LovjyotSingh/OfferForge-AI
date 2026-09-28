@@ -1,43 +1,44 @@
 const mongoose = require('mongoose');
 
+const sectionSchema = new mongoose.Schema({
+  key: String,
+  title: String,
+  short: String,
+  kind: String,
+  brief: String,
+  count: Number,
+  score: { type: Number, default: null }
+}, { _id: false });
+
+const pendingQuestionSchema = new mongoose.Schema({
+  index: Number,
+  sectionKey: String,
+  question: String,
+  hint: String,
+  source: String,
+  askedAt: Date
+}, { _id: false });
+
 const interviewSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+  roleId: String,
   targetRole: { type: String, required: true },
-  difficulty: { type: String, enum: ['easy', 'medium', 'hard'], default: 'medium' },
+  difficulty: { type: String, enum: ['easy', 'medium', 'hard'], default: 'easy' },
   status: { type: String, enum: ['in-progress', 'completed', 'abandoned'], default: 'in-progress' },
   startTime: { type: Date, default: Date.now },
   endTime: Date,
   duration: { type: Number, default: 0 },
-  totalQuestions: { type: Number, default: 10 },
+  sections: [sectionSchema],
+  totalQuestions: { type: Number, default: 0 },
   answeredQuestions: { type: Number, default: 0 },
-  overallScore: { type: Number, default: 0 },
-  scores: {
-    technical: { type: Number, default: 0 },
-    communication: { type: Number, default: 0 },
-    confidence: { type: Number, default: 0 }
-  },
+  pendingQuestion: { type: pendingQuestionSchema, default: null },
   responses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Response' }],
+  overallScore: { type: Number, default: null },
+  recommendation: String,
+  overallFeedback: String,
   strengths: [String],
   improvementAreas: [String],
-  overallFeedback: String
+  recommendations: [String]
 }, { timestamps: true });
-
-interviewSchema.methods.complete = async function () {
-  this.status = 'completed';
-  this.endTime = new Date();
-  this.duration = Math.floor((this.endTime - this.startTime) / 1000);
-
-  await this.populate('responses');
-  const scoredResponses = this.responses.filter(r => !r.skipped);
-  if (scoredResponses.length > 0) {
-    const count = scoredResponses.length;
-    const sum = (field) => scoredResponses.reduce((a, r) => a + (r.evaluation?.[field] || 0), 0);
-    this.overallScore = Math.round(sum('score') / count);
-    this.scores.technical = Math.round(sum('technicalScore') / count);
-    this.scores.communication = Math.round(sum('clarityScore') / count);
-    this.scores.confidence = Math.round(sum('confidenceScore') / count);
-  }
-  return this.save();
-};
 
 module.exports = mongoose.model('Interview', interviewSchema);

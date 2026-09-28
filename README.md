@@ -1,195 +1,132 @@
 <div align="center">
 
-# ⚡ OfferForge AI
+# OfferForge AI
 
-### Next-Generation AI-Powered Career Readiness & Technical Interview Platform
+### Structured mock interviews that feel like the real thing
 
-[![Next.js & Vite](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20TailwindCSS-blue.svg)](https://vitejs.dev/)
-[![Node.js](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express%20%7C%20MongoDB-green.svg)](https://nodejs.org/)
-[![AI Engine](https://img.shields.io/badge/AI-OpenRouter%20%7C%20Gemini%20%7C%20GPT--4o--Mini-purple.svg)](https://openrouter.ai/)
-[![License](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
-
-<p align="center">
-  <strong>OfferForge AI</strong> bridges the gap between preparation and high-impact engineering placement offers. It combines dynamic multi-turn AI mock interviews, an interactive live code sandbox, real-time system design reviews, an automated ATS resume analyzer, and verifiable skill certifications into a unified full-stack ecosystem.
-</p>
+[![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20Tailwind%20%7C%20Framer%20Motion-orange.svg)](https://vitejs.dev/)
+[![Backend](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express%20%7C%20MongoDB-green.svg)](https://nodejs.org/)
+[![AI](https://img.shields.io/badge/AI-Gemini%20%7C%20OpenRouter-purple.svg)](https://aistudio.google.com/)
 
 </div>
 
 ---
 
-## 🚀 Key Modules & Features
+## What it does
 
-### 🎙️ 1. Adaptive AI Mock Interviews
-- **Multi-Role & Multi-Level**: Practice for Frontend, Backend, Full Stack, DevOps, Machine Learning, and System Architecture roles across Junior, Mid, and Staff levels.
-- **Granular AI Telemetry**: Real-time evaluation assessing **Technical Accuracy**, **Communication Clarity**, and **Answer Confidence**.
-- **Context-Aware Follow-Ups**: Dynamically drills deeper into edge cases based on candidate answers.
+Pick a role and a level, and OfferForge runs a full interview loop split into the same sections a real panel uses. An SDE round, for example, is two DSA problems, then two system design questions, then OOP, CS fundamentals, and a behavioral question.
 
-### 💻 2. Live Interactive Code Sandbox
-- In-browser code runner supporting algorithmic problem solving with real-time test case execution.
-- Automated AI code analysis reviewing Time/Space complexity ($O(N)$), edge case resilience, and readability.
+Every answer is graded against its section's own rubric (DSA is judged on approach, complexity, edge cases, and clarity; behavioral on context, ownership, impact, and reflection). At the end you get a score per section, a hire / no-hire call, and a list of what to practice next.
 
-### 🏗️ 3. Interactive System Design Studio
-- Architecture canvas designed for high-scale system design rounds (Load Balancers, Microservices, Caching, Sharding, Message Brokers).
-- AI architectural feedback evaluating SPOF (Single Point of Failure), bottlenecks, and scalability trade-offs.
+## Roles and sections
 
-### 📄 4. AI Resume & ATS Diagnostic Scanner
-- Instant PDF resume parsing with keyword density mapping against targeted job descriptions.
-- Computes comprehensive ATS readiness scores, identifying missing technical skills and providing actionable bullet-point revisions.
+| Role | Sections (questions) |
+|---|---|
+| Software Development Engineer | DSA (2) · System Design (2) · OOP (2) · CS Fundamentals (2) · Behavioral (1) |
+| Frontend Developer | JavaScript (2) · React (2) · Web Fundamentals (2) · DSA (1) · Behavioral (1) |
+| Backend Developer | DSA (2) · APIs & Backend (2) · Databases (2) · System Design (2) · Behavioral (1) |
+| Data Analyst | SQL (2) · Statistics (2) · Analytics Case (2) · Behavioral (1) |
+| Data Scientist | Statistics (2) · Machine Learning (2) · SQL (2) · Behavioral (1) |
+| Business Analyst | Requirements (2) · Analytics Case (2) · SQL (1) · Behavioral (2) |
+| Product Manager | Product Sense (2) · Metrics (2) · Execution (2) · Behavioral (2) |
 
-### 🏅 5. Verifiable Skill Credentials
-- Cryptographically stamped completion certificates with public verification hashes for LinkedIn and portfolio showcasing.
+Levels: Entry, Mid, Senior. Everything above is defined in one file, [`backend/src/config/interviewRoles.js`](backend/src/config/interviewRoles.js). To add a role or change a section's question count or rubric, edit it there and the API and UI pick it up.
 
-### 📊 6. Executive Readiness Dashboard
-- Visual skill radar, performance trajectories over time, and interview historical breakdown powered by Recharts.
+## How grading works
 
----
+- The AI scores each of the section's 4 rubric criteria from 0 to 10. The answer score is their average × 10.
+- Verdicts: 85+ Strong, 70+ Solid, 50+ Partial, below 50 Weak. Skipped questions score 0.
+- The overall score is the average across all questions. 85+ is Strong hire, 70+ Hire, 55+ Lean no hire, below that No hire.
+- If the AI provider is down or the key is invalid, questions come from a curated built-in bank and answers are marked **Not graded**. The app never makes up a score.
 
-## 🛠️ Architecture & Tech Stack
-
-```mermaid
-graph TD
-    A[Client: React / Vite / TailwindCSS] -->|REST API / JWT| B[Backend: Node.js / Express]
-    B -->|Mongoose ODM| C[(MongoDB Atlas)]
-    B -->|Prompt Pipeline| D[OpenRouter / Gemini / GPT-4o-mini]
-    A -->|Live Coding Sandbox| E[Client-Side Test Runner]
-    B -->|File Uploads| F[Multer & PDF Parser]
-```
+## Tech stack
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React 18, Vite, Tailwind CSS, Lucide Icons, Recharts, Canvas Confetti |
-| **Backend** | Node.js, Express, Mongoose ODM, JWT Authentication, Multer, bcryptjs |
-| **Database** | MongoDB Atlas (Cloud Managed NoSQL) |
-| **AI Intelligence** | OpenRouter API / Google Gemini / OpenAI GPT-4o-mini |
-| **Deployment** | Vercel (Frontend Client) & Render / Vercel (Backend Serverless API) |
+| Frontend | React 18, Vite, Tailwind CSS, Framer Motion, Lenis, Lucide icons |
+| Backend | Node.js, Express, Mongoose, JWT, bcryptjs |
+| Database | MongoDB (Atlas) |
+| AI | Google Gemini (default) or any OpenRouter model |
 
----
-
-## 📂 Project Structure
+## Project structure
 
 ```text
 OfferForge-AI/
+├── api/index.js                  # Vercel serverless entry (re-exports backend/server.js)
 ├── backend/
-│   ├── config/          # MongoDB connection & environment configuration
-│   ├── controllers/     # Authentication, Interview, Resume, & Sandbox logic
-│   ├── middleware/      # JWT auth guard, error handling, file uploaders
-│   ├── models/          # Mongoose Schemas (User, Interview, Resume, Certificate)
-│   ├── routes/          # Express API route declarations
-│   ├── utils/           # AI prompt pipelines & response sanitizers
-│   └── server.js        # Express application entry point
-├── frontend/
-│   ├── src/
-│   │   ├── components/  # Reusable UI components (Navbar, Modals, Radar, Cards)
-│   │   ├── data/        # Static role catalogs, questions, & templates
-│   │   ├── pages/       # Home, Interview, CodeSandbox, SystemDesign, Resume, Dashboard
-│   │   ├── services/    # Axios API client & authentication service
-│   │   └── App.jsx      # Route management & state boundaries
-├── render.yaml          # Infrastructure as Code blueprint for Render
-├── DEPLOYMENT.md        # Comprehensive multi-cloud deployment checklist
-└── README.md            # Platform overview and documentation
+│   ├── server.js                 # Express app, CORS, MongoDB connection
+│   └── src/
+│       ├── config/interviewRoles.js   # Roles, sections, rubrics, fallback question bank
+│       ├── controllers/          # auth, interview, analytics
+│       ├── middleware/           # JWT guard, error handler
+│       ├── models/               # User, Interview, Response
+│       ├── routes/               # /api/auth, /api/interviews, /api/analytics
+│       └── services/ai.service.js     # Question generation, rubric grading, debrief
+└── frontend/
+    └── src/
+        ├── components/           # Layout, motion primitives, ScoreRing, AuthLayout
+        ├── pages/                # Home, Login, Register, Dashboard, InterviewPage, ResultsPage
+        ├── services/             # Axios client, auth storage, role catalog
+        └── App.jsx               # Routes and page transitions
 ```
 
----
+## Running locally
 
-## ⚡ Quick Start & Local Development
+Requirements: Node.js 18+, a MongoDB connection string, and a Gemini API key (free at [aistudio.google.com](https://aistudio.google.com)).
 
-### Prerequisites
-- **Node.js**: v18.0+ or v20.0+
-- **MongoDB Atlas** connection string
-- **OpenRouter** or **Gemini API** key
-
----
-
-### 1. Backend Setup
+**Backend**
 
 ```bash
-# Navigate to backend directory
 cd backend
-
-# Install dependencies
 npm install
-
-# Create local environment config
-cp .env.example .env
+cp .env.example .env    # then fill it in
+npm run dev             # http://localhost:5000
 ```
 
-Edit `backend/.env`:
+`backend/.env`:
+
 ```env
-PORT=5000
 NODE_ENV=development
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/offerforge?retryWrites=true&w=majority
-JWT_SECRET=your_super_secret_jwt_key_here
-AI_PROVIDER=openrouter
-AI_API_KEY=your_openrouter_or_gemini_api_key
-AI_MODEL=openai/gpt-4o-mini
+PORT=5000
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/offerforge
+JWT_SECRET=<long random string>
+AI_PROVIDER=gemini
+AI_API_KEY=<your Gemini key>
+# AI_MODEL is optional. Defaults: gemini-3.5-flash-lite for Gemini, openai/gpt-4o-mini for OpenRouter
 FRONTEND_URL=http://localhost:5173
 ```
 
-Start backend dev server:
-```bash
-npm run dev
-# Server running on http://localhost:5000
-```
-
----
-
-### 2. Frontend Setup
+**Frontend**
 
 ```bash
-# Navigate to frontend directory
-cd ../frontend
-
-# Install dependencies
+cd frontend
 npm install
-
-# Create local environment config
-cp .env.example .env
+cp .env.example .env    # set VITE_API_URL=http://localhost:5000/api
+npm run dev             # http://localhost:5173
 ```
 
-Edit `frontend/.env`:
-```env
-VITE_API_URL=http://localhost:5000/api
-```
+## API
 
-Start frontend dev server:
-```bash
-npm run dev
-# Client running on http://localhost:5173
-```
+| Method | Route | Auth | Purpose |
+|---|---|---|---|
+| POST | `/api/auth/register`, `/api/auth/login` | No | Create account / sign in (returns JWT) |
+| GET | `/api/auth/me` | Yes | Current user |
+| GET | `/api/interviews/roles` | No | Role and section catalog |
+| POST | `/api/interviews/start` | Yes | Start a round: `{ roleId, difficulty }` |
+| GET | `/api/interviews/:id/next-question` | Yes | Current question (idempotent) |
+| POST | `/api/interviews/:id/answer` | Yes | Submit `{ answer, timeSpent }`, returns graded response |
+| POST | `/api/interviews/:id/skip` | Yes | Skip the current question |
+| POST | `/api/interviews/:id/complete` | Yes | Finish and generate the debrief |
+| GET | `/api/interviews/:id`, `/api/interviews/history` | Yes | Results and history |
+| GET | `/api/analytics/dashboard` | Yes | Stats, section averages, trend |
 
----
+## Deployment
 
-## 🌐 Production Deployment
+- **Render + Vercel:** deploy `backend/` to Render as a web service (see `render.yaml`) with the env vars above, and deploy `frontend/` to Vercel with `VITE_API_URL=https://<your-render-service>.onrender.com/api`.
+- **Vercel only:** the root `vercel.json` builds the frontend and serves the API from `api/index.js`. Set the backend env vars in the Vercel project.
 
-### Option A: Render (Backend) + Vercel (Frontend)
-1. **Backend**:
-   - Push repository to GitHub.
-   - Connect repository to **Render** as a Web Service (using `backend/` root directory or `render.yaml`).
-   - Add environment variables (`MONGODB_URI`, `JWT_SECRET`, `AI_API_KEY`, `FRONTEND_URL`).
-2. **Frontend**:
-   - Import repository to **Vercel** with Root Directory set to `frontend`.
-   - Set `VITE_API_URL` to `https://your-backend-service.onrender.com/api`.
+Never commit `.env` files.
 
-### Option B: Full Vercel Serverless
-- Follow the instructions in [DEPLOYMENT.md](./DEPLOYMENT.md) for full serverless deployment.
+## Author
 
----
-
-## 🛡️ Security & Best Practices
-
-- **Never commit `.env` files** containing live database credentials or API keys.
-- **JWT Protection**: All interview history, sandbox runs, and resume diagnostics are securely protected with Bearer tokens.
-- **Input Sanitization**: File uploads are scanned, limited in size, and processed in memory buffers.
-
----
-
-## 👨‍💻 Author & Maintainer
-
-**Lovjyot Singh**  
-GitHub: [@LovjyotSingh](https://github.com/LovjyotSingh)
-
----
-
-<div align="center">
-  <sub>Built with ❤️ for aspiring engineers aiming for top-tier software placement offers.</sub>
-</div>
+**Lovjyot Singh** · [@LovjyotSingh](https://github.com/LovjyotSingh)

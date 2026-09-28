@@ -10,9 +10,7 @@ require('dotenv').config();
 
 const authRoutes = require('./src/routes/auth.routes');
 const interviewRoutes = require('./src/routes/interview.routes');
-const resumeRoutes = require('./src/routes/resume.routes');
 const analyticsRoutes = require('./src/routes/analytics.routes');
-const aiRoutes = require('./src/routes/ai.routes');
 
 const app = express();
 
@@ -91,14 +89,14 @@ app.use(async (req, res, next) => {
 
 // Root Route
 app.get('/', (req, res) => {
-  res.send('PlacementPrep AI Backend Running on Vercel');
+  res.send('OfferForge AI API is running');
 });
 
 // Health Check
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'placement-prep-api',
+    service: 'offerforge-api',
     environment: process.env.NODE_ENV || 'development',
     time: new Date().toISOString()
   });
@@ -107,9 +105,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/interviews', interviewRoutes);
-app.use('/api/resume', resumeRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/ai', aiRoutes);
 
 // 404 Handler
 app.use('*', (req, res) => {
