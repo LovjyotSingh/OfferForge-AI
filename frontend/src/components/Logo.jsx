@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import logo from '../assets/logo.png';
 
 export function Spark({ className = 'h-5 w-5' }) {
   return (
@@ -20,14 +21,8 @@ export function Spark({ className = 'h-5 w-5' }) {
 
 export default function Logo({ to = '/' }) {
   return (
-    <Link to={to} className="group flex items-center gap-2.5" aria-label="OfferForge AI home">
-      <span className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-ink-900">
-        <span className="absolute inset-0 rounded-xl bg-ember-500/20 opacity-0 blur-md transition duration-500 group-hover:opacity-100" />
-        <Spark className="relative h-5 w-5 transition-transform duration-700 ease-out group-hover:rotate-90" />
-      </span>
-      <span className="text-[15px] font-semibold tracking-tight">
-        OfferForge<span className="font-display text-lg italic text-ember-400"> AI</span>
-      </span>
+    <Link to={to} className="flex shrink-0 items-center">
+      <img src={logo} alt="OfferForge AI" className="h-10 w-auto sm:h-11" />
     </Link>
   );
 }
