@@ -50,10 +50,15 @@ export default function Login() {
         <Field label="Password">
           <PasswordInput autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
         </Field>
-        <label className="flex cursor-pointer select-none items-center gap-2.5 text-sm text-muted">
-          <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} className="h-4 w-4 cursor-pointer accent-ember-500" />
-          Keep me signed in on this device
-        </label>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <label className="flex cursor-pointer select-none items-center gap-2.5 text-sm text-muted">
+            <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} className="h-4 w-4 cursor-pointer accent-ember-500" />
+            Keep me signed in
+          </label>
+          <Link to="/forgot-password" className="text-sm text-ember-300 hover:text-ember-200">
+            Forgot password?
+          </Link>
+        </div>
         <button type="submit" disabled={loading} className="btn-primary w-full py-3">
           {loading ? 'Signing in…' : 'Sign in'}
           {!loading && <ArrowRight size={16} />}

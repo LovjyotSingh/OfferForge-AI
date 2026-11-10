@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
@@ -12,6 +11,8 @@ require('dotenv').config();
 const authRoutes = require('./src/routes/auth.routes');
 const interviewRoutes = require('./src/routes/interview.routes');
 const analyticsRoutes = require('./src/routes/analytics.routes');
+const accountRoutes = require('./src/routes/account.routes');
+const limits = require('./src/utils/rateLimit');
 
 const app = express();
 
@@ -68,13 +69,7 @@ morgan.token('route', req => (req.originalUrl || '').split('?')[0]);
 app.use(morgan(':method :route :status :response-time ms'));
 
 // General API rate limit (per IP).
-app.use('/api/', rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { status: 'error', message: 'Too many requests. Please slow down.' }
-}));
+app.use('/api/', limits.general);
 
 // Database connection caching for Vercel serverless functions
 let isConnected = false;
@@ -104,6 +99,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/account', accountRoutes);
 app.use('/api/interviews', interviewRoutes);
 app.use('/api/analytics', analyticsRoutes);
 

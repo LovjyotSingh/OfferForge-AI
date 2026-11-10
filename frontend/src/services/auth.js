@@ -42,6 +42,13 @@ export function setAuth(user, rememberMe = true) {
   }
 }
 
+// Refresh the stored profile (e.g. after the email is confirmed) without
+// changing the "keep me signed in" choice.
+export function updateUser(user) {
+  if (!user) return;
+  setAuth(user, localStorage.getItem(USER_KEY) !== null);
+}
+
 export function clearAuth() {
   localStorage.removeItem(USER_KEY);
   sessionStorage.removeItem(USER_KEY);

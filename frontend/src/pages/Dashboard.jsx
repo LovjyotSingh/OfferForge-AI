@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, ChevronRight, Clock3, ListChecks, Play, RotateCcw, Target } from 'lucide-react';
+import { ArrowRight, ChevronRight, Clock3, ListChecks, MailWarning, Play, RotateCcw, Target } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Layout from '../components/Layout';
 import { CountUp, EASE, Magnetic, Reveal } from '../components/motion';
 import api, { getApiErrorMessage } from '../services/api';
-import { getUser } from '../services/auth';
+import { getUser, updateUser } from '../services/auth';
 import { getCatalog } from '../services/catalog';
 import { LEVEL_LABELS, formatDate, scoreTone } from '../lib/format';
 
@@ -168,6 +168,16 @@ export default function Dashboard() {
   const [roleId, setRoleId] = useState(null);
   const [level, setLevel] = useState('easy');
   const [starting, setStarting] = useState(false);
+  const [me, setMe] = useState(user);
+  const [resending, setResending] = useState(false);
+
+  useEffect(() => {
+    // Refresh the profile so the email-confirmation banner is current.
+    api.get('/auth/me').then(res => {
+      setMe(res.data.data.user);
+      updateUser(res.data.data.user);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     Promise.all([getCatalog(), api.get('/analytics/dashboard').then(r => r.data.data)])
@@ -195,6 +205,18 @@ export default function Dashboard() {
 
   const weakest = stats?.sectionStats?.[0];
 
+  const resendVerification = async () => {
+    setResending(true);
+    try {
+      const res = await api.post('/account/resend-verification');
+      toast.success(res.data.message);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not send the email'));
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <Layout>
       <div className="mx-auto max-w-6xl px-4 pb-24 pt-32 sm:px-6">
@@ -205,6 +227,21 @@ export default function Dashboard() {
           </h1>
           <p className="mt-3 text-muted">Pick a role, choose your level, and run a full structured round.</p>
         </Reveal>
+
+        {me?.needsVerification && (
+          <div className="mt-8 flex flex-col gap-3 rounded-2xl border border-ember-500/30 bg-ember-500/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <div className="flex items-start gap-3">
+              <MailWarning size={18} className="mt-0.5 shrink-0 text-ember-300" />
+              <p className="text-sm text-muted">
+                <span className="font-medium text-paper">Confirm your email to start interviews.</span>{' '}
+                We sent a link to {me.email}. Check your spam folder too.
+              </p>
+            </div>
+            <button onClick={resendVerification} disabled={resending} className="btn-ghost shrink-0 py-2">
+              {resending ? 'Sending…' : 'Resend link'}
+            </button>
+          </div>
+        )}
 
         <AnimatePresence>
           {stats?.inProgress && (
