@@ -69,9 +69,14 @@ function Navbar() {
                 Dashboard
               </NavLink>
               <div className="mx-1 h-5 w-px bg-line" />
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-ember-500/15 text-xs font-semibold text-ember-300" title={user?.name}>
+              <Link
+                to="/settings"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-ember-500/15 text-xs font-semibold text-ember-300 transition hover:bg-ember-500/25"
+                title="Account settings"
+                aria-label="Account settings"
+              >
                 {initial}
-              </span>
+              </Link>
               <button onClick={logout} className="rounded-full p-2 text-muted transition hover:bg-white/5 hover:text-paper" aria-label="Log out" title="Log out">
                 <LogOut size={16} />
               </button>
@@ -107,6 +112,9 @@ function Navbar() {
                 <Link to="/dashboard" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-sm hover:bg-white/5">
                   Dashboard
                 </Link>
+                <Link to="/settings" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-sm hover:bg-white/5">
+                  Account settings
+                </Link>
                 <button onClick={logout} className="block w-full rounded-xl px-4 py-3 text-left text-sm text-muted hover:bg-white/5">
                   Log out
                 </button>
@@ -133,7 +141,10 @@ function Footer() {
     <footer className="border-t border-line">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-xs text-faint sm:flex-row">
         <span>© {new Date().getFullYear()} OfferForge AI · Built by Lovjyot Singh</span>
-        <span>Practice like it's the real thing.</span>
+        <span className="flex items-center gap-4">
+          <Link to="/privacy" className="transition hover:text-paper">Privacy</Link>
+          <span>Practice like it's the real thing.</span>
+        </span>
       </div>
     </footer>
   );

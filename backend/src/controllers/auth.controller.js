@@ -2,38 +2,15 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User.model');
 const { USER_TARGET_ROLES } = require('../config/interviewRoles');
 const { setSessionCookie, clearSessionCookie } = require('../middleware/auth.middleware');
+const { EMAIL_RE, str, passwordProblem } = require('../utils/security');
+const { sendVerification } = require('./account.controller');
+const { isEmailConfigured } = require('../services/email.service');
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const PASSWORD_MIN = 8;
-const PASSWORD_MAX = 72; // bcrypt ignores everything past 72 bytes
 // Hash of a random value nobody knows. Compared against when the email is unknown,
 // so "no such account" takes as long as "wrong password" and emails can't be probed by timing.
 const DUMMY_HASH = '$2a$12$jAAd9BabOsmiqKtmFOWeDuy6G8wMhKLrqSD2y2ZcnosSe60E4YdyG';
 
-const str = v => (typeof v === 'string' ? v : '');
-
-function publicUser(user) {
-  return {
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    targetRole: user.targetRole,
-    stats: user.stats
-  };
-}
-
-function passwordProblem(password, { name, email }) {
-  if (password.length < PASSWORD_MIN) return `Password must be at least ${PASSWORD_MIN} characters`;
-  if (Buffer.byteLength(password, 'utf8') > PASSWORD_MAX) return `Password must be at most ${PASSWORD_MAX} characters`;
-  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) return 'Password must include at least one letter and one number';
-  const lower = password.toLowerCase();
-  const local = email.split('@')[0];
-  if (lower === email || lower === name.toLowerCase() || (local.length >= 4 && lower.includes(local))) {
-    return 'Password must not contain your name or email';
-  }
-  return null;
-}
+const publicUser = require('../utils/publicUser');
 
 exports.register = async (req, res) => {
   try {
@@ -58,6 +35,7 @@ exports.register = async (req, res) => {
 
     const user = await User.create({ name, email, password, targetRole });
     setSessionCookie(res, user, req.body.rememberMe !== false);
+    if (isEmailConfigured()) await sendVerification(user);
 
     res.status(201).json({ status: 'success', message: 'Account created successfully!', data: { user: publicUser(user) } });
   } catch (err) {

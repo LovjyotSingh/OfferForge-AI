@@ -30,6 +30,7 @@ export default function Register() {
     try {
       const res = await api.post('/auth/register', { name, email, password, targetRole });
       setAuth(res.data.data.user);
+      if (res.data.data.user.needsVerification) toast.success(`Check ${email} for a link to confirm your email.`, { duration: 6000 });
       navigate(`/dashboard?role=${targetRole}`);
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Registration failed. Please try again.'));

@@ -2,6 +2,7 @@ const Interview = require('../models/Interview.model');
 const Response = require('../models/Response.model');
 const User = require('../models/User.model');
 const ai = require('../services/ai.service');
+const { isEmailConfigured } = require('../services/email.service');
 const { LEVELS, getRole, getSection, buildPlan, locateQuestion, publicCatalog } = require('../config/interviewRoles');
 
 const MAX_ANSWER_LENGTH = 20000;
@@ -50,6 +51,15 @@ exports.getRoles = (req, res) => {
 // POST /api/interviews/start
 exports.startInterview = async (req, res) => {
   try {
+    // Interviews spend AI quota, so require a confirmed email once the site can send email.
+    if (isEmailConfigured() && !req.user.emailVerified) {
+      return res.status(403).json({
+        status: 'error',
+        code: 'EMAIL_NOT_VERIFIED',
+        message: 'Confirm your email to start interviews. Check your inbox, or send a new link from the dashboard.'
+      });
+    }
+
     const { roleId, difficulty = 'easy' } = req.body;
     const role = typeof roleId === 'string' ? getRole(roleId) : null;
     if (!role) return res.status(400).json({ status: 'error', message: 'Pick a valid role' });
