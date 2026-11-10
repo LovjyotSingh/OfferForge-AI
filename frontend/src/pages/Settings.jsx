@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import Layout from '../components/Layout';
 import { Field, PasswordInput } from '../components/AuthLayout';
 import { Reveal } from '../components/motion';
+import { VerifyEmailCode } from '../components/EmailCode';
 import api, { getApiErrorMessage } from '../services/api';
 import { clearAuth, getUser, updateUser } from '../services/auth';
 import { passwordHint, weakPasswordMessage } from '../lib/password';
@@ -42,15 +43,6 @@ export default function Settings() {
       setBusy('');
     }
   };
-
-  const resend = () => run('resend', async () => {
-    try {
-      const res = await api.post('/account/resend-verification');
-      toast.success(res.data.message);
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Could not send the email'));
-    }
-  });
 
   const changePassword = e => {
     e.preventDefault();
@@ -116,11 +108,15 @@ export default function Settings() {
             {user.emailVerified ? (
               <p className="flex items-center gap-2 text-sm text-emerald-400"><CheckCircle2 size={16} /> Confirmed</p>
             ) : user.needsVerification ? (
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-4">
                 <p className="flex items-center gap-2 text-sm text-ember-300"><MailWarning size={16} /> Not confirmed yet</p>
-                <button onClick={resend} disabled={busy === 'resend'} className="btn-ghost">
-                  {busy === 'resend' ? 'Sending…' : 'Send confirmation link'}
-                </button>
+                <VerifyEmailCode
+                  email={user.email}
+                  onVerified={verified => {
+                    setUser(verified);
+                    updateUser(verified);
+                  }}
+                />
               </div>
             ) : (
               <p className="text-sm text-muted">Email confirmation isn't switched on for this site yet.</p>

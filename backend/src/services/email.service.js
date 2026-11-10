@@ -38,45 +38,62 @@ function appUrl() {
 
 const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-function layout({ heading, body, buttonText, link, footnote }) {
+function codeBlock(code, codeNote) {
+  if (!code) return '';
+  return `<tr><td style="padding-top:24px">
+<div style="font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8A8278">Your code</div>
+<div style="margin-top:8px;display:inline-block;background:#0B0A09;border:1px solid #2A2621;border-radius:12px;padding:14px 20px;font-family:'JetBrains Mono',Menlo,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:.3em;color:#F5F1EA">${escapeHtml(code)}</div>
+<div style="margin-top:8px;font-size:13px;color:#8A8278">${escapeHtml(codeNote)}</div>
+</td></tr>
+<tr><td style="padding-top:24px;font-size:13px;color:#8A8278">Or, on this device:</td></tr>`;
+}
+
+function layout({ heading, body, buttonText, link, footnote, code, codeNote }) {
   return `<!doctype html><html><body style="margin:0;background:#0B0A09;font-family:Inter,Arial,sans-serif;color:#F5F1EA">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#1A1714;border:1px solid #2A2621;border-radius:16px;padding:32px">
 <tr><td style="font-size:14px;font-weight:600;color:#FF6B1A;letter-spacing:.02em">OfferForge AI</td></tr>
 <tr><td style="padding-top:20px;font-size:22px;font-weight:600">${escapeHtml(heading)}</td></tr>
 <tr><td style="padding-top:12px;font-size:15px;line-height:1.6;color:#C9C2B8">${escapeHtml(body)}</td></tr>
-<tr><td style="padding-top:28px"><a href="${escapeHtml(link)}" style="display:inline-block;background:#FF6B1A;color:#0B0A09;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:999px">${escapeHtml(buttonText)}</a></td></tr>
+${codeBlock(code, codeNote)}
+<tr><td style="padding-top:${code ? 12 : 28}px"><a href="${escapeHtml(link)}" style="display:inline-block;background:#FF6B1A;color:#0B0A09;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:999px">${escapeHtml(buttonText)}</a></td></tr>
 <tr><td style="padding-top:28px;font-size:12px;line-height:1.6;color:#8A8278">${escapeHtml(footnote)}<br>If the button doesn't work, paste this link into your browser:<br><span style="word-break:break-all">${escapeHtml(link)}</span></td></tr>
 </table></td></tr></table></body></html>`;
 }
 
-async function send({ to, subject, heading, body, buttonText, link, footnote }) {
+async function send({ to, subject, heading, body, buttonText, link, footnote, code, codeNote }) {
   const from = process.env.EMAIL_FROM || `OfferForge AI <${process.env.SMTP_USER}>`;
-  const text = `${heading}\n\n${body}\n\n${buttonText}: ${link}\n\n${footnote}`;
-  await getTransport().sendMail({ from, to, subject, text, html: layout({ heading, body, buttonText, link, footnote }) });
+  const codeText = code ? `Your code: ${code}\n${codeNote}\n\nOr, on this device:\n` : '';
+  const text = `${heading}\n\n${body}\n\n${codeText}${buttonText}: ${link}\n\n${footnote}`;
+  await getTransport().sendMail({ from, to, subject, text, html: layout({ heading, body, buttonText, link, footnote, code, codeNote }) });
 }
 
 exports.isEmailConfigured = isEmailConfigured;
 exports.appUrl = appUrl;
 
-exports.sendVerificationEmail = (user, token) => send({
+// The code leads the subject so it shows in phone notifications without opening the email.
+exports.sendVerificationEmail = (user, token, code) => send({
   to: user.email,
-  subject: 'Confirm your email for OfferForge AI',
+  subject: `${code} is your OfferForge AI confirmation code`,
   heading: `Welcome, ${user.name.split(' ')[0]}`,
-  body: 'Confirm your email address to start your mock interviews.',
+  body: 'Enter this code on OfferForge AI to confirm your email and start your mock interviews.',
+  code,
+  codeNote: 'Expires in 30 minutes. Never share it with anyone.',
   buttonText: 'Confirm email',
   link: `${appUrl()}/verify-email?token=${encodeURIComponent(token)}`,
-  footnote: "This link expires in 24 hours. If you didn't create an account, you can ignore this email."
+  footnote: "The button works for 24 hours. If you didn't create an account, you can ignore this email."
 });
 
-exports.sendPasswordResetEmail = (user, token) => send({
+exports.sendPasswordResetEmail = (user, token, code) => send({
   to: user.email,
-  subject: 'Reset your OfferForge AI password',
+  subject: `${code} is your OfferForge AI password reset code`,
   heading: 'Reset your password',
-  body: 'Someone asked to reset the password for this account. If it was you, choose a new password below. Resetting signs you out on every device.',
+  body: 'Someone asked to reset the password for this account. If it was you, enter this code on the reset page. Resetting signs you out on every device.',
+  code,
+  codeNote: 'Expires in 30 minutes. Never share it with anyone.',
   buttonText: 'Choose a new password',
   link: `${appUrl()}/reset-password?token=${encodeURIComponent(token)}`,
-  footnote: "This link expires in 30 minutes and works once. If you didn't ask for this, ignore this email and your password stays the same."
+  footnote: "The code and button expire in 30 minutes and work once. If you didn't ask for this, ignore this email and your password stays the same."
 });
 
 exports.sendPasswordChangedEmail = user => send({
