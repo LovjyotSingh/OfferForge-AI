@@ -1,70 +1,141 @@
-const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User.model');
+const { USER_TARGET_ROLES } = require('../config/interviewRoles');
+const { setSessionCookie, clearSessionCookie } = require('../middleware/auth.middleware');
 
-const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PASSWORD_MIN = 8;
+const PASSWORD_MAX = 72; // bcrypt ignores everything past 72 bytes
+// Hash of a random value nobody knows. Compared against when the email is unknown,
+// so "no such account" takes as long as "wrong password" and emails can't be probed by timing.
+const DUMMY_HASH = '$2a$12$jAAd9BabOsmiqKtmFOWeDuy6G8wMhKLrqSD2y2ZcnosSe60E4YdyG';
+
+const str = v => (typeof v === 'string' ? v : '');
+
+function publicUser(user) {
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    targetRole: user.targetRole,
+    stats: user.stats
+  };
+}
+
+function passwordProblem(password, { name, email }) {
+  if (password.length < PASSWORD_MIN) return `Password must be at least ${PASSWORD_MIN} characters`;
+  if (Buffer.byteLength(password, 'utf8') > PASSWORD_MAX) return `Password must be at most ${PASSWORD_MAX} characters`;
+  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) return 'Password must include at least one letter and one number';
+  const lower = password.toLowerCase();
+  const local = email.split('@')[0];
+  if (lower === email || lower === name.toLowerCase() || (local.length >= 4 && lower.includes(local))) {
+    return 'Password must not contain your name or email';
+  }
+  return null;
+}
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, targetRole } = req.body;
+    const name = str(req.body.name).trim();
+    const email = str(req.body.email).trim().toLowerCase();
+    const password = str(req.body.password);
+    const targetRole = str(req.body.targetRole) || 'Not Set';
+
     if (!name || !email || !password)
       return res.status(400).json({ status: 'error', message: 'Name, email and password are required' });
+    if (name.length < 2 || name.length > 50)
+      return res.status(400).json({ status: 'error', message: 'Name must be 2 to 50 characters' });
+    if (email.length > 254 || !EMAIL_RE.test(email))
+      return res.status(400).json({ status: 'error', message: 'Enter a valid email address' });
+    if (!USER_TARGET_ROLES.includes(targetRole))
+      return res.status(400).json({ status: 'error', message: 'Pick a valid target role' });
+    const problem = passwordProblem(password, { name, email });
+    if (problem) return res.status(400).json({ status: 'error', message: problem });
 
-    const exists = await User.findOne({ email: email.toLowerCase() });
-    if (exists)
-      return res.status(409).json({ status: 'error', message: 'Email already registered' });
+    if (await User.exists({ email }))
+      return res.status(409).json({ status: 'error', message: 'An account with this email already exists. Try signing in.' });
 
-    const user = await User.create({ name, email: email.toLowerCase(), password, targetRole: targetRole || 'Not Set' });
-    const token = signToken(user._id);
+    const user = await User.create({ name, email, password, targetRole });
+    setSessionCookie(res, user, req.body.rememberMe !== false);
 
-    res.status(201).json({
-      status: 'success',
-      message: 'Account created successfully!',
-      data: { token, user: { _id: user._id, name: user.name, email: user.email, role: user.role, targetRole: user.targetRole } }
-    });
+    res.status(201).json({ status: 'success', message: 'Account created successfully!', data: { user: publicUser(user) } });
   } catch (err) {
-    console.error('Register error:', err);
+    if (err?.code === 11000)
+      return res.status(409).json({ status: 'error', message: 'An account with this email already exists. Try signing in.' });
+    console.error('Register error:', err.message);
     res.status(500).json({ status: 'error', message: 'Registration failed. Please try again.' });
   }
 };
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = str(req.body.email).trim().toLowerCase();
+    const password = str(req.body.password);
     if (!email || !password)
       return res.status(400).json({ status: 'error', message: 'Email and password are required' });
 
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
-    if (!user || !(await user.comparePassword(password)))
+    const user = await User.findOne({ email }).select('+password');
+    const ok = await bcrypt.compare(password.slice(0, 200), user ? user.password : DUMMY_HASH);
+    if (!user || !ok || !user.isActive)
       return res.status(401).json({ status: 'error', message: 'Invalid email or password' });
 
+    // Upgrade older, weaker hashes transparently on a successful login.
+    if (user.needsRehash()) user.password = password;
     user.lastLogin = new Date();
-    await user.save();
+    // Skip validation: older accounts may predate the current password-length rule.
+    await user.save({ validateBeforeSave: false });
 
-    const token = signToken(user._id);
-    res.status(200).json({
-      status: 'success',
-      data: {
-        token,
-        user: { _id: user._id, name: user.name, email: user.email, role: user.role, targetRole: user.targetRole, stats: user.stats }
-      }
-    });
+    setSessionCookie(res, user, req.body.rememberMe !== false);
+    res.status(200).json({ status: 'success', data: { user: publicUser(user) } });
   } catch (err) {
-    console.error('Login error:', err);
+    console.error('Login error:', err.message);
     res.status(500).json({ status: 'error', message: 'Login failed. Please try again.' });
   }
 };
 
-exports.getMe = async (req, res) => {
-  const user = await User.findById(req.user.id);
-  res.json({ status: 'success', data: { user } });
+exports.logout = (req, res) => {
+  clearSessionCookie(res);
+  res.json({ status: 'success' });
+};
+
+// Revokes every session on every device by invalidating all previously issued tokens.
+exports.logoutAll = async (req, res, next) => {
+  try {
+    await User.updateOne({ _id: req.user._id }, { $inc: { tokenVersion: 1 } });
+    clearSessionCookie(res);
+    res.json({ status: 'success' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getMe = (req, res) => {
+  res.json({ status: 'success', data: { user: publicUser(req.user) } });
 };
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, targetRole, profile } = req.body;
-    const user = await User.findByIdAndUpdate(req.user.id, { name, targetRole, profile }, { new: true });
-    res.json({ status: 'success', data: { user } });
+    const update = {};
+    if (req.body.name !== undefined) update.name = str(req.body.name).trim();
+    if (req.body.targetRole !== undefined) {
+      if (!USER_TARGET_ROLES.includes(req.body.targetRole))
+        return res.status(400).json({ status: 'error', message: 'Pick a valid target role' });
+      update.targetRole = req.body.targetRole;
+    }
+    const profile = req.body.profile;
+    if (profile && typeof profile === 'object') {
+      if (profile.college !== undefined) update['profile.college'] = str(profile.college);
+      if (profile.phone !== undefined) update['profile.phone'] = str(profile.phone);
+      if (profile.graduationYear !== undefined) update['profile.graduationYear'] = Number(profile.graduationYear) || undefined;
+      if (Array.isArray(profile.skills)) update['profile.skills'] = profile.skills.filter(s => typeof s === 'string');
+    }
+
+    const user = await User.findByIdAndUpdate(req.user._id, { $set: update }, { new: true, runValidators: true });
+    res.json({ status: 'success', data: { user: publicUser(user) } });
   } catch (err) {
+    if (err?.name === 'ValidationError')
+      return res.status(400).json({ status: 'error', message: 'Some profile fields are invalid' });
     res.status(500).json({ status: 'error', message: 'Update failed' });
   }
 };

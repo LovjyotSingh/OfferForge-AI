@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence, MotionConfig } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
-import { getToken } from './services/auth';
+import { isLoggedIn } from './services/auth';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -11,11 +11,11 @@ import InterviewPage from './pages/InterviewPage';
 import ResultsPage from './pages/ResultsPage';
 
 function PrivateRoute({ children }) {
-  return getToken() ? children : <Navigate to="/login" replace />;
+  return isLoggedIn() ? children : <Navigate to="/login" replace />;
 }
 
 function GuestRoute({ children }) {
-  return getToken() ? <Navigate to="/dashboard" replace /> : children;
+  return isLoggedIn() ? <Navigate to="/dashboard" replace /> : children;
 }
 
 function AnimatedRoutes() {

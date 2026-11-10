@@ -31,7 +31,8 @@ async function callGemini(prompt, options = {}) {
   let lastError = null;
 
   for (const model of fallbackModels) {
-    const url = `${GEMINI_API_BASE}/models/${model}:generateContent?key=${apiKey}`;
+    // The key goes in a header, never the URL, so it can't leak into logs or error messages.
+    const url = `${GEMINI_API_BASE}/models/${encodeURIComponent(model)}:generateContent`;
 
     try {
       const res = await axios.post(
@@ -41,7 +42,7 @@ async function callGemini(prompt, options = {}) {
           generationConfig: { temperature, maxOutputTokens }
         },
         {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
           timeout: 30000
         }
       );

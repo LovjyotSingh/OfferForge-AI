@@ -5,6 +5,7 @@ const ai = require('../services/ai.service');
 const { LEVELS, getRole, getSection, buildPlan, locateQuestion, publicCatalog } = require('../config/interviewRoles');
 
 const MAX_ANSWER_LENGTH = 20000;
+const DAILY_INTERVIEW_LIMIT = Math.max(1, parseInt(process.env.DAILY_INTERVIEW_LIMIT, 10) || 10);
 
 function progressOf(interview) {
   return {
@@ -50,9 +51,22 @@ exports.getRoles = (req, res) => {
 exports.startInterview = async (req, res) => {
   try {
     const { roleId, difficulty = 'easy' } = req.body;
-    const role = getRole(roleId);
+    const role = typeof roleId === 'string' ? getRole(roleId) : null;
     if (!role) return res.status(400).json({ status: 'error', message: 'Pick a valid role' });
-    if (!LEVELS[difficulty]) return res.status(400).json({ status: 'error', message: 'Pick a valid level' });
+    if (typeof difficulty !== 'string' || !Object.hasOwn(LEVELS, difficulty))
+      return res.status(400).json({ status: 'error', message: 'Pick a valid level' });
+
+    // Every interview costs AI calls on our key, so cap how many one account can start per day.
+    const startedToday = await Interview.countDocuments({
+      userId: req.user.id,
+      createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+    });
+    if (startedToday >= DAILY_INTERVIEW_LIMIT) {
+      return res.status(429).json({
+        status: 'error',
+        message: `You've started ${DAILY_INTERVIEW_LIMIT} interviews in the last 24 hours. Come back tomorrow for more.`
+      });
+    }
 
     await Interview.updateMany(
       { userId: req.user.id, status: 'in-progress' },

@@ -22,14 +22,14 @@ export default function Register() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      toast.error('Use at least 8 characters, with a letter and a number');
       return;
     }
     setLoading(true);
     try {
       const res = await api.post('/auth/register', { name, email, password, targetRole });
-      setAuth(res.data.data.token, res.data.data.user);
+      setAuth(res.data.data.user);
       navigate(`/dashboard?role=${targetRole}`);
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Registration failed. Please try again.'));
@@ -58,7 +58,7 @@ export default function Register() {
         <Field label="Email">
           <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="input" required />
         </Field>
-        <Field label="Password" hint="At least 6 characters.">
+        <Field label="Password" hint="At least 8 characters, with a letter and a number.">
           <PasswordInput autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
         </Field>
         <Field label="Role you're preparing for">

@@ -17,11 +17,11 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { email, password, rememberMe });
       if (rememberMe) localStorage.setItem('remembered_email', email);
       else localStorage.removeItem('remembered_email');
 
-      setAuth(res.data.data.token, res.data.data.user, rememberMe);
+      setAuth(res.data.data.user, rememberMe);
       navigate('/dashboard');
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Login failed. Check your email and password.'));
