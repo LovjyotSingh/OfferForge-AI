@@ -31,4 +31,36 @@ function hashToken(token) {
 
 const isTokenShaped = t => typeof t === 'string' && /^[A-Za-z0-9_-]{43}$/.test(t);
 
-module.exports = { PASSWORD_MIN, PASSWORD_MAX, EMAIL_RE, str, passwordProblem, createToken, hashToken, isTokenShaped };
+// 6-digit one-time codes people can read on one device and type on another.
+// A code alone is guessable (1 in a million), so each one also has a short
+// expiry and a hard cap on wrong attempts. The hash is tied to the user and
+// purpose, so the same digits can't be reused across accounts or flows.
+const CODE_MAX_ATTEMPTS = 5;
+
+function createCode(purpose, userId) {
+  const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+  return { code, hash: hashCode(purpose, userId, code) };
+}
+
+function hashCode(purpose, userId, code) {
+  return crypto.createHash('sha256').update(`${purpose}:${userId}:${code}`).digest('hex');
+}
+
+function codeMatches(storedHash, purpose, userId, code) {
+  if (!storedHash) return false;
+  const a = Buffer.from(storedHash, 'hex');
+  const b = Buffer.from(hashCode(purpose, userId, code), 'hex');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+// Accepts "123456", "123 456" or "123-456".
+function normalizeCode(value) {
+  const digits = typeof value === 'string' ? value.replace(/[\s-]/g, '') : '';
+  return /^\d{6}$/.test(digits) ? digits : null;
+}
+
+module.exports = {
+  PASSWORD_MIN, PASSWORD_MAX, EMAIL_RE, CODE_MAX_ATTEMPTS,
+  str, passwordProblem, createToken, hashToken, isTokenShaped,
+  createCode, codeMatches, normalizeCode
+};

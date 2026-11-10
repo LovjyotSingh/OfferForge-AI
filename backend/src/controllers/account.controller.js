@@ -3,12 +3,20 @@ const User = require('../models/User.model');
 const Interview = require('../models/Interview.model');
 const Response = require('../models/Response.model');
 const { setSessionCookie, clearSessionCookie } = require('../middleware/auth.middleware');
-const { EMAIL_RE, str, passwordProblem, createToken, hashToken, isTokenShaped } = require('../utils/security');
+const {
+  EMAIL_RE, CODE_MAX_ATTEMPTS, str, passwordProblem, createToken, hashToken, isTokenShaped,
+  createCode, codeMatches, normalizeCode
+} = require('../utils/security');
 const email = require('../services/email.service');
 const publicUser = require('../utils/publicUser');
 
-const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
-const RESET_TTL_MS = 30 * 60 * 1000;
+const VERIFY_TTL_MS = 24 * 60 * 60 * 1000; // link
+const VERIFY_CODE_TTL_MS = 30 * 60 * 1000; // code
+const RESET_TTL_MS = 30 * 60 * 1000; // link and code
+
+const VERIFY_CODE_FIELDS = { emailVerifyCodeHash: 1, emailVerifyCodeExpires: 1, emailVerifyAttempts: 1 };
+const VERIFY_FIELDS = { emailVerifyTokenHash: 1, emailVerifyExpires: 1, ...VERIFY_CODE_FIELDS };
+const RESET_FIELDS = { resetTokenHash: 1, resetExpires: 1, resetCodeHash: 1, resetAttempts: 1 };
 
 const fail = (res, status, message, extra = {}) => res.status(status).json({ status: 'error', message, ...extra });
 
@@ -23,15 +31,34 @@ function inBackground(task) {
   }
 }
 
-// Creates a fresh verification token (invalidating any older link) and emails it.
+// Uses up one of a code's attempts before checking it, atomically, so even
+// parallel guesses can never exceed CODE_MAX_ATTEMPTS.
+async function claimAttempt(userId, field) {
+  const result = await User.updateOne(
+    { _id: userId, $or: [{ [field]: { $lt: CODE_MAX_ATTEMPTS } }, { [field]: { $exists: false } }] },
+    { $inc: { [field]: 1 } }
+  );
+  return result.modifiedCount === 1;
+}
+
+// Creates a fresh link + code (invalidating older ones) and emails them.
 async function sendVerification(user) {
   const { token, hash } = createToken();
+  const { code, hash: codeHash } = createCode('verify', user._id);
   await User.updateOne(
     { _id: user._id },
-    { $set: { emailVerifyTokenHash: hash, emailVerifyExpires: new Date(Date.now() + VERIFY_TTL_MS) } }
+    {
+      $set: {
+        emailVerifyTokenHash: hash,
+        emailVerifyExpires: new Date(Date.now() + VERIFY_TTL_MS),
+        emailVerifyCodeHash: codeHash,
+        emailVerifyCodeExpires: new Date(Date.now() + VERIFY_CODE_TTL_MS),
+        emailVerifyAttempts: 0
+      }
+    }
   );
   try {
-    await email.sendVerificationEmail(user, token);
+    await email.sendVerificationEmail(user, token, code);
     return true;
   } catch (err) {
     console.error('Verification email failed:', err.message);
@@ -47,7 +74,7 @@ exports.resendVerification = async (req, res, next) => {
     if (req.user.emailVerified) return res.json({ status: 'success', message: 'Your email is already confirmed.' });
     const sent = await sendVerification(req.user);
     if (!sent) return fail(res, 502, "We couldn't send the email right now. Try again in a few minutes.");
-    res.json({ status: 'success', message: `We sent a new confirmation link to ${req.user.email}.` });
+    res.json({ status: 'success', message: `We sent a new code to ${req.user.email}.` });
   } catch (err) {
     next(err);
   }
@@ -60,11 +87,36 @@ exports.verifyEmail = async (req, res, next) => {
     if (!isTokenShaped(token)) return fail(res, 400, 'This confirmation link is invalid.');
     const user = await User.findOneAndUpdate(
       { emailVerifyTokenHash: hashToken(token), emailVerifyExpires: { $gt: new Date() } },
-      { $set: { emailVerified: true }, $unset: { emailVerifyTokenHash: 1, emailVerifyExpires: 1 } },
+      { $set: { emailVerified: true }, $unset: VERIFY_FIELDS },
       { new: true }
     );
     if (!user) return fail(res, 400, 'This confirmation link is invalid or has expired. Sign in to get a new one.');
     res.json({ status: 'success', message: 'Your email is confirmed.', data: { user: publicUser(user) } });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/account/verify-code  { code }  (signed in)
+exports.verifyCode = async (req, res, next) => {
+  try {
+    const code = normalizeCode(req.body.code);
+    if (!code) return fail(res, 400, 'Enter the 6-digit code from the email.');
+    if (req.user.emailVerified) return res.json({ status: 'success', message: 'Your email is already confirmed.', data: { user: publicUser(req.user) } });
+
+    const user = await User.findById(req.user._id).select('+emailVerifyCodeHash +emailVerifyCodeExpires');
+    if (!user.emailVerifyCodeHash || !(user.emailVerifyCodeExpires > new Date())) {
+      return fail(res, 400, 'This code has expired. Send a new one.');
+    }
+    if (!(await claimAttempt(user._id, 'emailVerifyAttempts'))) {
+      return fail(res, 429, 'Too many wrong codes. Send a new one.');
+    }
+    if (!codeMatches(user.emailVerifyCodeHash, 'verify', user._id, code)) {
+      return fail(res, 400, "That code isn't right. Check the email and try again.");
+    }
+
+    const updated = await User.findByIdAndUpdate(user._id, { $set: { emailVerified: true }, $unset: VERIFY_FIELDS }, { new: true });
+    res.json({ status: 'success', message: 'Your email is confirmed.', data: { user: publicUser(updated) } });
   } catch (err) {
     next(err);
   }
@@ -81,10 +133,14 @@ exports.forgotPassword = async (req, res, next) => {
     const user = await User.findOne({ email: address, isActive: true });
     if (user) {
       const { token, hash } = createToken();
-      await User.updateOne({ _id: user._id }, { $set: { resetTokenHash: hash, resetExpires: new Date(Date.now() + RESET_TTL_MS) } });
-      inBackground(() => email.sendPasswordResetEmail(user, token));
+      const { code, hash: codeHash } = createCode('reset', user._id);
+      await User.updateOne(
+        { _id: user._id },
+        { $set: { resetTokenHash: hash, resetCodeHash: codeHash, resetAttempts: 0, resetExpires: new Date(Date.now() + RESET_TTL_MS) } }
+      );
+      inBackground(() => email.sendPasswordResetEmail(user, token, code));
     }
-    res.json({ status: 'success', message: 'If an account exists for that email, a reset link is on its way. Check your inbox and spam folder.' });
+    res.json({ status: 'success', message: 'If an account exists for that email, we sent it a 6-digit code. Check your inbox and spam folder.' });
   } catch (err) {
     next(err);
   }
@@ -103,15 +159,49 @@ exports.resetPassword = async (req, res, next) => {
     const problem = passwordProblem(password, { name: user.name, email: user.email });
     if (problem) return fail(res, 400, problem);
 
-    user.password = password;
-    user.resetTokenHash = undefined;
-    user.resetExpires = undefined;
-    user.emailVerified = true; // they just proved they control the inbox
-    user.tokenVersion = (user.tokenVersion || 0) + 1; // sign out every device
-    await user.save({ validateBeforeSave: false });
-
+    await finishReset(user, password);
     clearSessionCookie(res);
-    inBackground(() => email.sendPasswordChangedEmail(user));
+    res.json({ status: 'success', message: 'Your password was reset. Sign in with your new password.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Sets the new password, burns the link and code, and signs out every device.
+async function finishReset(user, password) {
+  const fresh = await User.findById(user._id).select('+password');
+  fresh.password = password;
+  fresh.emailVerified = true; // they just proved they control the inbox
+  fresh.tokenVersion = (fresh.tokenVersion || 0) + 1;
+  await fresh.save({ validateBeforeSave: false });
+  await User.updateOne({ _id: user._id }, { $unset: RESET_FIELDS });
+  inBackground(() => email.sendPasswordChangedEmail(fresh));
+}
+
+const WRONG_RESET_CODE = "That code isn't right or has expired. Check the email, or request a new code.";
+
+// POST /api/account/reset-password-code  { email, code, password }
+// Unknown emails get the same answer as wrong codes, so it reveals nothing.
+exports.resetPasswordWithCode = async (req, res, next) => {
+  try {
+    const address = str(req.body.email).trim().toLowerCase();
+    const code = normalizeCode(req.body.code);
+    const password = str(req.body.password);
+    if (!EMAIL_RE.test(address) || address.length > 254) return fail(res, 400, 'Enter a valid email address');
+    if (!code) return fail(res, 400, 'Enter the 6-digit code from the email.');
+
+    const user = await User.findOne({ email: address, isActive: true }).select('+resetCodeHash +resetExpires');
+    if (!user || !user.resetCodeHash || !(user.resetExpires > new Date())) return fail(res, 400, WRONG_RESET_CODE);
+
+    // Check the new password first so a typo there doesn't burn an attempt.
+    const problem = passwordProblem(password, { name: user.name, email: user.email });
+    if (problem) return fail(res, 400, problem);
+
+    if (!(await claimAttempt(user._id, 'resetAttempts'))) return fail(res, 429, 'Too many wrong codes. Request a new one.');
+    if (!codeMatches(user.resetCodeHash, 'reset', user._id, code)) return fail(res, 400, WRONG_RESET_CODE);
+
+    await finishReset(user, password);
+    clearSessionCookie(res);
     res.json({ status: 'success', message: 'Your password was reset. Sign in with your new password.' });
   } catch (err) {
     next(err);

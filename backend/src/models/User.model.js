@@ -34,13 +34,22 @@ const userSchema = new mongoose.Schema({
   emailVerifyTokenHash: { type: String, select: false },
   emailVerifyExpires: { type: Date, select: false },
   resetTokenHash: { type: String, select: false },
-  resetExpires: { type: Date, select: false }
+  resetExpires: { type: Date, select: false },
+  // 6-digit codes sent alongside the links (hash, expiry, wrong-attempt count).
+  emailVerifyCodeHash: { type: String, select: false },
+  emailVerifyCodeExpires: { type: Date, select: false },
+  emailVerifyAttempts: { type: Number, select: false },
+  resetCodeHash: { type: String, select: false },
+  resetAttempts: { type: Number, select: false }
 }, { timestamps: true });
 
 userSchema.index({ emailVerifyTokenHash: 1 }, { sparse: true });
 userSchema.index({ resetTokenHash: 1 }, { sparse: true });
 
-const PRIVATE_FIELDS = ['password', 'tokenVersion', 'emailVerifyTokenHash', 'emailVerifyExpires', 'resetTokenHash', 'resetExpires', '__v'];
+const PRIVATE_FIELDS = [
+  'password', 'tokenVersion', 'emailVerifyTokenHash', 'emailVerifyExpires', 'resetTokenHash', 'resetExpires',
+  'emailVerifyCodeHash', 'emailVerifyCodeExpires', 'emailVerifyAttempts', 'resetCodeHash', 'resetAttempts', '__v'
+];
 
 // Never serialize secrets, even if a query explicitly selected them.
 userSchema.set('toJSON', {
