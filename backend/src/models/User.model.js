@@ -2,10 +2,12 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { USER_TARGET_ROLES } = require('../config/interviewRoles');
 
+const BCRYPT_ROUNDS = 12;
+
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true, minlength: 2, maxlength: 50 },
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true, minlength: 6, select: false },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true, maxlength: 254 },
+  password: { type: String, required: true, minlength: 8, select: false },
   role: { type: String, enum: ['student', 'admin'], default: 'student' },
   targetRole: {
     type: String,
@@ -13,10 +15,10 @@ const userSchema = new mongoose.Schema({
     default: 'Not Set'
   },
   profile: {
-    college: String,
-    graduationYear: Number,
-    skills: [String],
-    phone: String
+    college: { type: String, trim: true, maxlength: 120 },
+    graduationYear: { type: Number, min: 1950, max: 2100 },
+    skills: { type: [{ type: String, trim: true, maxlength: 40 }], validate: v => v.length <= 30 },
+    phone: { type: String, trim: true, maxlength: 20 }
   },
   stats: {
     totalInterviews: { type: Number, default: 0 },
@@ -24,17 +26,34 @@ const userSchema = new mongoose.Schema({
     lastInterviewDate: Date
   },
   isActive: { type: Boolean, default: true },
+  // Bumped to revoke every session token issued before it.
+  tokenVersion: { type: Number, default: 0 },
   lastLogin: Date
 }, { timestamps: true });
 
+// Never serialize secrets, even if a query explicitly selected them.
+userSchema.set('toJSON', {
+  transform: (doc, ret) => {
+    delete ret.password;
+    delete ret.tokenVersion;
+    delete ret.__v;
+    return ret;
+  }
+});
+
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, BCRYPT_ROUNDS);
   next();
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
+};
+
+// True when the stored hash was made with fewer rounds than we use now.
+userSchema.methods.needsRehash = function () {
+  return bcrypt.getRounds(this.password) < BCRYPT_ROUNDS;
 };
 
 module.exports = mongoose.model('User', userSchema);

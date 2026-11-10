@@ -8,3 +8,4 @@ uploads/
 frontend/vite-dev.log
 portfolio_repo/
 swiftshelf/
+.vercel

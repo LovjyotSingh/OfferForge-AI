@@ -8,7 +8,7 @@ import ScoreRing from '../components/ScoreRing';
 import { EASE, Magnetic, Reveal, Spotlight, Stagger, WordReveal, staggerItem } from '../components/motion';
 import useSmoothScroll from '../hooks/useSmoothScroll';
 import { getCatalog } from '../services/catalog';
-import { getToken } from '../services/auth';
+import { isLoggedIn } from '../services/auth';
 
 const DEMO_QUESTIONS = [
   { section: 'Data Structures & Algorithms', text: 'Given a string s, find the length of the longest substring without repeating characters.' },
@@ -144,7 +144,7 @@ function InterviewPreview() {
 }
 
 function Hero() {
-  const token = getToken();
+  const token = isLoggedIn();
   const heroRef = useRef(null);
   const cardRef = useRef(null);
 
@@ -302,7 +302,7 @@ function Step({ step, index, progress, total }) {
 }
 
 function RoleCard({ role }) {
-  const token = getToken();
+  const token = isLoggedIn();
   return (
     <motion.div variants={staggerItem} className="h-full">
       <Spotlight as={Link} to={token ? `/dashboard?role=${role.id}` : '/register'} className="card group flex h-full flex-col p-6 transition duration-500 hover:-translate-y-1 hover:border-ember-500/30">
@@ -424,7 +424,7 @@ function FeedbackPreview() {
 }
 
 function FinalCta() {
-  const token = getToken();
+  const token = isLoggedIn();
   return (
     <section className="relative overflow-hidden px-4 py-32 text-center sm:px-6 sm:py-44">
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 h-[28rem] w-[48rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-ember-600/20 blur-[120px]" />

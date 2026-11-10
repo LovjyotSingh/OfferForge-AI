@@ -4,7 +4,8 @@ import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-
 import { LogOut, Menu, X } from 'lucide-react';
 import Logo from './Logo';
 import { EASE, PageTransition } from './motion';
-import { clearAuth, getToken, getUser } from '../services/auth';
+import { getUser, isLoggedIn } from '../services/auth';
+import { logout as endSession } from '../services/api';
 
 export function Backdrop() {
   return (
@@ -24,7 +25,7 @@ export function Backdrop() {
 
 function Navbar() {
   const navigate = useNavigate();
-  const token = getToken();
+  const token = isLoggedIn();
   const user = getUser();
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
@@ -37,8 +38,8 @@ function Navbar() {
     setHidden(latest > 240 && latest > previous && !open);
   });
 
-  const logout = () => {
-    clearAuth();
+  const logout = async () => {
+    await endSession();
     setOpen(false);
     navigate('/');
   };
